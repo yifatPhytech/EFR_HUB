@@ -1,0 +1,27 @@
+\t (00:00:04) allegro_free_viewer 22.1 S003 Windows SPB 64-bit Edition
+\t (00:00:04)     Journal start - Tue Nov  7 02:49:44 2023
+\t (00:00:04)         Host=PYT-PF46P0NG User=itay Pid=13648 CPUs=20
+\t (00:00:04) CmdLine= C:\Cadence\PCBViewers_2022\tools\bin\allegro_free_viewer.exe
+\t (00:00:04) 
+\t (00:00:07) Starting new design...
+\i (00:00:07) trapsize 1963
+\i (00:00:07) trapsize 1261
+\i (00:00:07) updateport PropPane
+\i (00:00:07) updateport VisibilityPane
+\i (00:00:07) ucpedit 
+\i (00:00:07) updateport VisibilityPane
+\i (00:00:12) open 
+\i (00:00:25) fillin "C:/Users/itay/Downloads/ESP32-S3-Parallel-TFT-with-Touch-7inch-main/hardware/MaTouch ESP32-S3 Parallel TFT with Touch 7“ V1.2.brd"
+\i (00:00:25) cd "C:/Users/itay/Downloads/ESP32-S3-Parallel-TFT-with-Touch-7inch-main/hardware"
+\t (00:00:25) Opening existing design...
+\e (00:00:25) ERROR(SPMHA1-161): Cannot open the design because of database problems. Run dbdoctor on the design from the command prompt to diagnose and fix the problems. If the problems persist, contact Cadence Customer Support with the design file and details of the steps performed before this message appeared.
+\i (00:00:28) fillin confirm
+\t (00:00:28) Starting new design...
+\i (00:00:28) trapsize 1910
+\i (00:00:30) fillin "menu_cancel"
+\i (00:00:30) updateport PropPane
+\i (00:00:30) updateport VisibilityPane
+\i (00:00:30) ucpedit 
+\i (00:00:30) updateport VisibilityPane
+\i (00:00:30) exit 
+\t (00:00:31)     Journal end - Tue Nov  7 02:50:10 2023

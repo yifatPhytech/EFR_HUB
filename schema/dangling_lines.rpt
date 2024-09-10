@@ -1,0 +1,334 @@
+(---------------------------------------------------------------------)
+(                                                                     )
+(    Dangling Line, Via and Antenna Report                            )
+(                                                                     )
+(    Drawing          : WBRD106V0-033.brd                             )
+(    Software Version : 22.1S003                                      )
+(    Date/Time        : Wed Oct  4 14:49:41 2023                      )
+(                                                                     )
+(---------------------------------------------------------------------)
+
+
+Report methodology:
+  - Dangling lines have at least one end not connected.
+  - Dangling vias have one or no connection
+      - Plus are not a test, thieving or netshort property via.
+  - Antenna vias do not have connections on their start and end layers.
+      - Plus they are not a thieving vias.
+      - Optionally, VOLTAGE nets, testvias and through vias can be suppressed with
+        the environment variable report_antennavia.
+      - Section may be suppressed by variable report_noantennavia.
+  - Not part of the current partition.
+  - To suppress items in dangle report add the OK_DANGLE property to the via
+    or connect line.
+
+
+
+<< Dangling Vias >>
+  Net                  Padstack               Location            Layers
+  ---------------------------------------------------------------------------
+  V2VIN                VIA20X10_SM14        (1200.50 804.63) TOP/BOTTOM 
+  Not on a Net         VIA20X10_SM14        (3290.98 1171.34) TOP/BOTTOM 
+
+
+<< Antenna Vias >>
+  Net                  Padstack               Location            Layers
+  ---------------------------------------------------------------------------
+  N15652281            VIA20X10_SM14        (3305.00 2085.76) TOP/BOTTOM 
+  N15652281            VIA20X10_SM14        (3609.78 2085.75) TOP/BOTTOM 
+  N15652277            VIA20X10_SM14        (3673.00 1738.00) TOP/BOTTOM 
+  N15652277            VIA20X10_SM14        (3289.00 1723.00) TOP/BOTTOM 
+  VREGSW1V8            VIA20X10_SM14        (4022.00 2003.00) TOP/BOTTOM 
+  VREGSW1V8            VIA20X10_SM14        (3515.95 1854.04) TOP/BOTTOM 
+  EFR_PA5_BATT_MONITOR_ENA VIA20X10_SM14        (3770.00 1057.00) TOP/BOTTOM 
+  EFR_PA5_BATT_MONITOR_ENA VIA20X10_SM14        (3682.00 1705.00) TOP/BOTTOM 
+  EFR_PC2_ADC0_CH2_BATT_VTG_MONIT VIA20X10_SM14        (3600.77 2062.42) TOP/BOTTOM 
+  EFR_PC2_ADC0_CH2_BATT_VTG_MONIT VIA20X10_SM14        (3664.91 1088.09) TOP/BOTTOM 
+  N15645078            VIA20X10_SM14        (3327.00 2138.00) TOP/BOTTOM 
+  N15645078            VIA20X10_SM14        (3453.00 2084.00) TOP/BOTTOM 
+  N15645078            VIA20X10_SM14        (3767.00 1753.00) TOP/BOTTOM 
+  N16830670            VIA20X10_SM14        (2199.09 1454.91) TOP/BOTTOM 
+  N16830670            VIA20X10_SM14        (2087.00 1404.00) TOP/BOTTOM 
+  N15667721            VIA20X10_SM14        (680.00 1703.00) TOP/BOTTOM 
+  N15667721            VIA20X10_SM14        (3675.38 2060.45) TOP/BOTTOM 
+  N15660512            VIA20X10_SM14        (3364.00 2048.00) TOP/BOTTOM 
+  N15660512            VIA20X10_SM14        (3498.00 1971.00) TOP/BOTTOM 
+  N15660500            VIA20X10_SM14        (3514.00 1949.00) TOP/BOTTOM 
+  N15660500            VIA20X10_SM14        (3256.00 1956.00) TOP/BOTTOM 
+  N15621284            VIA20X10_SM14        (2140.00 1152.00) TOP/BOTTOM 
+  N15621284            VIA20X10_SM14        (3825.00 1769.00) TOP/BOTTOM 
+  N15655878            VIA20X10_SM14        (2767.00 2559.00) TOP/BOTTOM 
+  N15655878            VIA20X10_SM14        (3825.88 1845.67) TOP/BOTTOM 
+  N15655340            VIA20X10_SM14        (1497.00 1641.00) TOP/BOTTOM 
+  N15655340            VIA20X10_SM14        (3731.00 2066.00) TOP/BOTTOM 
+  N15655336            VIA20X10_SM14        (1852.00 1609.00) TOP/BOTTOM 
+  N15655336            VIA20X10_SM14        (3725.00 2091.00) TOP/BOTTOM 
+  RLY_NC2              VIA20X10_SM14        (3064.00 1833.00) TOP/BOTTOM 
+  RLY_NC2              VIA20X10_SM14        (2052.50 1628.50) TOP/BOTTOM 
+  N00543               VIA20X10_SM14        (908.00 1494.00) TOP/BOTTOM 
+  N00543               VIA20X10_SM14        (1914.00 1241.00) TOP/BOTTOM 
+  N00543               VIA20X10_SM14        (3586.00 1656.00) TOP/BOTTOM 
+  N00543               VIA20X10_SM14        (3281.00 1349.00) TOP/BOTTOM 
+  VMAIN_SW             VIA20X10_SM14        (1723.48 1427.00) TOP/BOTTOM 
+  VMAIN_SW             VIA20X10_SM14        (1042.00 1682.00) TOP/BOTTOM 
+  V2VIN                VIA20X10_SM14        (1200.50 804.63) TOP/BOTTOM 
+  COIL_N               VIA20X10_SM14        (1952.50 1626.50) TOP/BOTTOM 
+  COIL_N               VIA20X10_SM14        (1476.41 1789.59) TOP/BOTTOM 
+  VLDO5V               VIA20X10_SM14        (2557.48 2357.48) TOP/BOTTOM 
+  VLDO5V               VIA20X10_SM14        (2742.00 2559.00) TOP/BOTTOM 
+  VLDO5V               VIA20X10_SM14        (2727.00 1796.00) TOP/BOTTOM 
+  VLDO5V               VIA20X10_SM14        (2591.00 1377.00) TOP/BOTTOM 
+  VLDO5V               VIA20X10_SM14        (2537.00 1552.00) TOP/BOTTOM 
+  VLDO5V               VIA20X10_SM14        (1702.00 1844.00) TOP/BOTTOM 
+  VLDO5V               VIA20X10_SM14        (1672.00 1843.00) TOP/BOTTOM 
+  VLDO5V               VIA20X10_SM14        (1638.00 1843.00) TOP/BOTTOM 
+  N01146               VIA20X10_SM14        (3226.00 2867.00) TOP/BOTTOM 
+  N01146               VIA20X10_SM14        (3599.00 2397.00) TOP/BOTTOM 
+  N01146               VIA20X10_SM14        (3728.00 1657.00) TOP/BOTTOM 
+  N01150               VIA20X10_SM14        (3242.00 2541.00) TOP/BOTTOM 
+  N01142               VIA20X10_SM14        (3321.00 2865.00) TOP/BOTTOM 
+  N01072               VIA20X10_SM14        (3894.00 2189.00) TOP/BOTTOM 
+  N01072               VIA20X10_SM14        (3574.00 2251.00) TOP/BOTTOM 
+  N01072               VIA20X10_SM14        (3328.71 2543.71) TOP/BOTTOM 
+  N15621270            VIA20X10_SM14        (572.00 1419.00) TOP/BOTTOM 
+  N15621270            VIA20X10_SM14        (2466.66 526.66) TOP/BOTTOM 
+  N15621438            VIA20X10_SM14        (566.00 1612.00) TOP/BOTTOM 
+  N15621438            VIA20X10_SM14        (3827.22 1797.00) TOP/BOTTOM 
+  N15621266            VIA20X10_SM14        (1985.00 485.00) TOP/BOTTOM 
+  N15621266            VIA20X10_SM14        (3723.00 1625.00) TOP/BOTTOM 
+  N15621262            VIA20X10_SM14        (3685.00 1678.00) TOP/BOTTOM 
+  N15621262            VIA20X10_SM14        (1988.34 526.66) TOP/BOTTOM 
+  N06205               VIA20X10_SM14        (3032.00 2625.00) TOP/BOTTOM 
+  N06205               VIA20X10_SM14        (2504.83 2634.83) TOP/BOTTOM 
+  N15593198            VIA20X10_SM14        (2703.00 2598.00) TOP/BOTTOM 
+  N15593198            VIA20X10_SM14        (3382.50 1993.50) TOP/BOTTOM 
+  N15593198            VIA20X10_SM14        (3497.00 1930.00) TOP/BOTTOM 
+  N15593310            VIA20X10_SM14        (2578.00 2044.00) TOP/BOTTOM 
+  N15593310            VIA20X10_SM14        (3517.00 2033.00) TOP/BOTTOM 
+  N15593206            VIA20X10_SM14        (1998.00 1602.00) TOP/BOTTOM 
+  N15593206            VIA20X10_SM14        (3694.13 2077.00) TOP/BOTTOM 
+  N15593206            VIA20X10_SM14        (1857.78 1501.00) TOP/BOTTOM 
+  N15593202            VIA20X10_SM14        (2569.00 2457.00) TOP/BOTTOM 
+  N15593202            VIA20X10_SM14        (3384.00 1960.00) TOP/BOTTOM 
+  N15593202            VIA20X10_SM14        (3515.00 1912.00) TOP/BOTTOM 
+  N15593202            VIA20X10_SM14        (2609.09 2572.09) TOP/BOTTOM 
+  N15593306            VIA20X10_SM14        (2836.25 2707.75) TOP/BOTTOM 
+  N15593306            VIA20X10_SM14        (2706.00 2560.00) TOP/BOTTOM 
+  N15593306            VIA20X10_SM14        (2754.00 1557.00) TOP/BOTTOM 
+  N15593306            VIA20X10_SM14        (3561.00 2061.00) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (3670.51 1976.31) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (3670.51 1901.51) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (3595.71 1901.51) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (3670.51 1826.71) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (3670.51 1940.88) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (3670.51 1862.14) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (3635.08 1901.51) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (3776.00 1511.00) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (3842.00 1490.00) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (4395.00 1899.00) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (4376.00 1830.00) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (4431.00 1846.00) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (4348.00 1941.00) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (4283.00 1989.00) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (4236.00 2034.00) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (4201.00 2089.00) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (4148.00 2137.00) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (4187.00 2008.00) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (4142.00 2034.00) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (4084.00 2008.00) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (4061.00 1977.00) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (3612.00 1490.00) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (4021.00 1313.00) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (4069.00 1345.00) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (4084.00 1407.00) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (4004.00 1383.00) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (3939.00 1278.00) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (3940.00 1354.00) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (3937.00 1407.00) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (4261.00 1473.00) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (4201.00 1473.00) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (4104.00 1474.00) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (4029.00 1474.00) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (3958.00 1476.00) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (3897.00 1474.00) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (3876.00 1507.00) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (3803.00 1555.00) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (3772.00 1619.00) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (3679.00 1534.00) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (3618.00 1522.00) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (3761.00 1553.00) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (4208.00 1965.00) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (4240.00 1945.00) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (4257.00 1904.00) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (4343.00 1885.00) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (4309.00 1862.00) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (4317.00 1833.00) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (4062.00 1826.00) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (3911.00 1821.00) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (4160.00 1835.00) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (4136.00 1857.00) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (4076.00 1856.00) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (4046.00 1855.00) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (3955.00 1855.00) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (4021.00 1924.00) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (4059.00 1926.00) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (4001.00 1963.00) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (3958.00 1966.00) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (3971.00 2027.00) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (3937.00 2025.00) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (3936.00 2055.00) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (3974.00 2055.00) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (4069.00 2087.00) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (4042.00 2122.00) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (4004.00 2123.00) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (922.60 3069.40) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (938.00 2919.00) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (1747.00 1952.00) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (1593.00 1954.00) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (1488.59 1839.59) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (2466.94 440.06) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (3790.00 1286.00) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (3786.00 1364.00) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (3786.00 1402.00) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (3725.00 1380.00) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (3602.00 1329.00) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (3627.00 1365.00) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (3679.00 1365.00) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (3706.00 1360.00) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (3740.00 1358.00) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (2755.19 2972.81) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (3386.00 2869.00) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (2801.34 2627.66) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (2873.00 2685.00) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (2986.00 2682.00) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (2769.00 2628.00) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (2664.65 2814.35) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (2709.89 2847.89) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (2477.00 2797.00) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (2474.73 2847.73) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (3831.00 2408.00) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (3867.00 2408.00) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (2517.66 2356.66) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (2484.59 2552.41) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (3972.00 2156.00) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (3939.00 2154.00) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (3904.16 2156.03) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (3823.54 2181.00) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (3738.79 2122.00) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (3634.71 2087.64) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (3833.00 2106.00) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (3573.25 2083.04) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (3537.71 2070.11) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (3599.28 2265.72) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (3393.00 2083.00) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (2559.91 2212.91) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (4277.00 1864.00) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (4300.21 1930.00) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (4182.71 1944.95) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (4088.71 1931.95) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (4101.71 1849.95) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (3925.09 1971.91) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (3926.09 1852.09) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (3980.91 1850.09) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (3416.00 1797.00) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (3408.72 1820.92) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (3213.00 1949.00) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (3278.65 1924.65) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (3279.65 1756.00) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (2687.00 1872.00) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (2626.10 1948.10) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (2518.00 2008.00) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (2516.00 1975.00) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (1844.00 1821.00) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (894.80 1763.20) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (3805.00 1661.00) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (3803.00 1696.00) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (3803.00 1726.00) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (3355.00 1603.00) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (3546.00 1661.00) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (3230.22 1704.22) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (2487.00 1667.00) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (1695.10 1473.90) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (1707.41 1637.59) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (1452.00 1499.00) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (1597.59 1639.59) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (968.65 1495.35) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (565.00 1662.00) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (526.41 1558.41) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (419.00 1651.00) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (308.94 1581.06) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (3436.40 1386.40) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (3436.80 1360.80) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (3433.80 1335.20) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (3432.60 1309.60) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (3015.00 1379.00) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (2782.00 1379.00) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (2729.00 1453.00) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (2610.00 1417.00) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (2750.40 1377.00) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (2310.00 1333.00) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (2094.00 1214.00) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (2001.10 1190.00) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (1819.71 1403.29) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (1847.00 1376.00) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (1493.00 1397.00) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (1271.65 1464.35) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (1018.09 1456.09) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (3625.09 1087.91) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (3413.71 1147.95) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (3497.81 1178.05) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (3276.71 1121.86) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (2189.65 962.65) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (1930.00 1049.00) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (1188.00 1161.00) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (1158.52 1176.52) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (1188.00 1124.00) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (1981.65 844.35) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (2015.00 825.00) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (770.00 341.21)  TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (951.00 258.00)  TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (1314.00 695.00) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (1349.00 697.00) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (1386.00 681.00) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (1384.00 711.00) TOP/BOTTOM 
+  GND                  VIA20X10_SM14        (1383.00 738.00) TOP/BOTTOM 
+  N01272               VIA20X10_SM14        (871.00 1485.00) TOP/BOTTOM 
+  N01272               VIA20X10_SM14        (1914.00 1216.00) TOP/BOTTOM 
+  N01272               VIA20X10_SM14        (3682.00 1642.00) TOP/BOTTOM 
+  N01272               VIA20X10_SM14        (3296.00 1326.00) TOP/BOTTOM 
+  VMAIN                VIA20X10_SM14        (3858.00 1542.00) TOP/BOTTOM 
+  VMAIN                VIA20X10_SM14        (3067.00 1493.00) TOP/BOTTOM 
+  VMAIN                VIA20X10_SM14        (2724.00 1828.00) TOP/BOTTOM 
+  VMAIN                VIA20X10_SM14        (813.00 2922.00) TOP/BOTTOM 
+  VMAIN                VIA20X10_SM14        (2566.00 2424.00) TOP/BOTTOM 
+  VMAIN                VIA20X10_SM14        (3907.00 2300.00) TOP/BOTTOM 
+  VMAIN                VIA20X10_SM14        (3345.10 2114.10) TOP/BOTTOM 
+  VMAIN                VIA20X10_SM14        (3518.00 1885.00) TOP/BOTTOM 
+  VMAIN                VIA20X10_SM14        (3517.87 1824.14) TOP/BOTTOM 
+  VMAIN                VIA20X10_SM14        (3360.35 1754.35) TOP/BOTTOM 
+  VMAIN                VIA20X10_SM14        (3390.50 1917.50) TOP/BOTTOM 
+  VMAIN                VIA20X10_SM14        (3286.00 1960.00) TOP/BOTTOM 
+  VMAIN                VIA20X10_SM14        (3285.00 1989.00) TOP/BOTTOM 
+  VMAIN                VIA20X10_SM14        (462.90 1854.90) TOP/BOTTOM 
+  VMAIN                VIA20X10_SM14        (489.10 1870.90) TOP/BOTTOM 
+  VMAIN                VIA20X10_SM14        (3408.10 1521.10) TOP/BOTTOM 
+  VMAIN                VIA20X10_SM14        (3581.00 1619.00) TOP/BOTTOM 
+  VMAIN                VIA20X10_SM14        (3113.60 1658.60) TOP/BOTTOM 
+  VMAIN                VIA20X10_SM14        (1771.90 1547.10) TOP/BOTTOM 
+  VMAIN                VIA20X10_SM14        (2528.10 1336.90) TOP/BOTTOM 
+  VMAIN                VIA20X10_SM14        (3725.00 1124.00) TOP/BOTTOM 
+  VMAIN                VIA20X10_SM14        (3726.00 1153.00) TOP/BOTTOM 
+  VMAIN                VIA20X10_SM14        (3726.00 1184.00) TOP/BOTTOM 
+  VMAIN                VIA20X10_SM14        (2187.65 1043.35) TOP/BOTTOM 
+  VMAIN                VIA20X10_SM14        (1892.00 1170.00) TOP/BOTTOM 
+  VMAIN                VIA20X10_SM14        (918.84 182.00)  TOP/BOTTOM 
+  VAEM                 VIA20X10_SM14        (3629.00 2257.00) TOP/BOTTOM 
+  VAEM                 VIA20X10_SM14        (3378.71 2535.29) TOP/BOTTOM 
+  VAEM                 VIA20X10_SM14        (3829.32 2263.68) TOP/BOTTOM 
+  N15612660            VIA20X10_SM14        (3662.64 2087.64) TOP/BOTTOM 
+  N15612638            VIA20X10_SM14        (3639.00 2063.00) TOP/BOTTOM 
+
+<< Summary >>
+  Total dangling lines:       0
+  Total dangling vias:        2
+  Total antenna vias:       293

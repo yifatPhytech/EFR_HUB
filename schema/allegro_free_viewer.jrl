@@ -1,0 +1,16 @@
+\t (00:00:11) allegro_free_viewer 22.1 S003 Windows SPB 64-bit Edition
+\t (00:00:11)     Journal start - Thu Nov 23 11:44:39 2023
+\t (00:00:11)         Host=PYT-PF46P0NG User=itay Pid=4356 CPUs=20
+\t (00:00:11) CmdLine= C:\Cadence\PCBViewers_2022\tools\bin\allegro_free_viewer.exe
+\t (00:00:11) 
+\t (00:00:11) Starting new design...
+\i (00:00:11) trapsize 1963
+\i (00:00:12) trapsize 1910
+\i (00:00:12) updateport PropPane
+\i (00:00:12) updateport VisibilityPane
+\i (00:00:12) ucpedit 
+\i (00:00:12) updateport VisibilityPane
+\i (00:00:25) opencd 'C:/Users/itay/Documents/PlatformIO/Projects/cbu_firmware_v2/PCB Schematic/CBRD1100V0-CBU-22.brd' 
+\t (00:00:25) Opening existing design...
+\i (00:00:25) trapsize 103139
+\t (00:00:25)     Journal end - Thu Nov 23 11:44:53 2023

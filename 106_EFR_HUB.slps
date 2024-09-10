@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="ASCII"?>
+<model:MDescriptors xmlns:model="http://www.silabs.com/ss/Studio.ecore">
+  <descriptors name="106_EFR_HUB">
+    <properties key="projectCommon.sdkId" value="com.silabs.sdk.stack.super:4.3.1._-1849732137"/>
+    <properties key="universalConfig.generationDirectory" value=""/>
+    <properties key="universalConfig.relativeWorkspacePath" value="..\106_firmware_efr32_3.slcw"/>
+    <properties key="universalConfig.toolchainCompatibility" value="iar gcc"/>
+    <properties key="projectCommon.boardIds" value="com.silabs.board.none:0.0.0"/>
+    <properties key="projectCommon.kitId" value=""/>
+    <properties key="projectCommon.partId" value="mcu.arm.efr32.fg23.efr32fg23a020f512gm48"/>
+    <properties key="projectCommon.toolchainId" value="com.silabs.ss.tool.ide.arm.toolchain.gnu.cdt:10.3.1.20210824"/>
+    <properties key="universalConfig.projectTypeIds" value="com.silabs.ss.framework.ide.project.core.cdtMbsProjectType"/>
+    <properties key="projectCommon.importModeId" value="COPY"/>
+    <properties key="universalConfig.incrementalOverwriteConfigs" value="false"/>
+  </descriptors>
+</model:MDescriptors>

@@ -1,0 +1,180 @@
+\t (00:00:31) allegro_free_viewer 22.1 S003 Windows SPB 64-bit Edition
+\t (00:00:31)     Journal start - Mon Sep  2 12:14:19 2024
+\t (00:00:31)         Host=PYT-PF46P0NG User=itay Pid=11876 CPUs=20
+\t (00:00:31) CmdLine= C:\Cadence\PCBViewers_2022\tools\bin\allegro_free_viewer.exe
+\t (00:00:31) 
+\d (00:00:31) Design opened: C:/Users/itay/SimplicityStudio/v5_workspace/106_firmware_efr32/PCB Schematic/WBRD106V1.brd
+\i (00:00:31) updateport PropPane
+\i (00:00:31) updateport VisibilityPane
+\i (00:00:31) ucpedit 
+\i (00:00:31) updateport VisibilityPane
+\i (00:00:34) zoom out 1 
+\i (00:00:34) setwindow pcb
+\i (00:00:34) zoom out 3500.20 3758.93
+\i (00:00:34) trapsize 11112
+\i (00:00:34) zoom out 1 
+\i (00:00:34) setwindow pcb
+\i (00:00:34) zoom out 4412.89 3758.93
+\i (00:00:34) trapsize 22224
+\i (00:00:34) zoom out 1 
+\i (00:00:34) setwindow pcb
+\i (00:00:34) zoom out 22681.22 3758.94
+\i (00:00:34) trapsize 29674
+\i (00:00:34) zoom out 1 
+\i (00:00:34) setwindow pcb
+\i (00:00:34) zoom out 34942.85 568.77
+\i (00:00:34) trapsize 29674
+\i (00:00:34) zoom in 1 
+\i (00:00:34) setwindow pcb
+\i (00:00:34) zoom in 4972.52 1458.98
+\i (00:00:34) trapsize 14837
+\i (00:00:34) zoom in 1 
+\i (00:00:34) setwindow pcb
+\i (00:00:34) zoom in 4883.50 1488.66
+\i (00:00:34) trapsize 7418
+\i (00:00:34) zoom in 1 
+\i (00:00:34) setwindow pcb
+\i (00:00:34) zoom in 4883.50 1488.66
+\i (00:00:34) trapsize 3709
+\i (00:00:35) roam x -96 
+\i (00:00:35) roam x -96
+\i (00:00:35) roam x -96 
+\i (00:00:35) roam x -96
+\i (00:00:35) roam x -96 
+\i (00:00:35) roam x -96
+\i (00:00:36) roam x -96 
+\i (00:00:36) roam x -96
+\i (00:00:36) roam x -96 
+\i (00:00:36) roam x -96
+\i (00:00:36) zoom in 1 
+\i (00:00:36) setwindow pcb
+\i (00:00:36) zoom in 2235.14 1718.64
+\i (00:00:36) trapsize 1855
+\i (00:00:36) zoom in 1 
+\i (00:00:36) setwindow pcb
+\i (00:00:36) zoom in 2235.14 1722.35
+\i (00:00:36) trapsize 927
+\i (00:00:36) zoom in 1 
+\i (00:00:36) setwindow pcb
+\i (00:00:36) zoom in 2235.14 1722.35
+\i (00:00:36) trapsize 464
+\i (00:00:36) zoom in 1 
+\i (00:00:36) setwindow pcb
+\i (00:00:36) zoom in 2235.14 1722.35
+\i (00:00:36) trapsize 232
+\i (00:00:37) zoom out 1 
+\i (00:00:37) setwindow pcb
+\i (00:00:37) zoom out 2335.75 1728.84
+\i (00:00:37) trapsize 464
+\i (00:00:37) zoom out 1 
+\i (00:00:37) setwindow pcb
+\i (00:00:37) zoom out 2336.68 1730.70
+\i (00:00:37) trapsize 927
+\i (00:00:37) zoom out 1 
+\i (00:00:37) setwindow pcb
+\i (00:00:37) zoom out 2336.69 1730.70
+\i (00:00:37) trapsize 1855
+\i (00:00:37) zoom out 1 
+\i (00:00:37) setwindow pcb
+\i (00:00:37) zoom out 2766.96 1663.92
+\i (00:00:37) trapsize 3709
+\i (00:00:38) QtSignal VisibilityLayersWidget VisLayersObjectsAccordion headerClicked 0
+\i (00:00:40) QtSignal VisibilityLayersObjArWidget VisLayerTable objCellVisibilityChanged All All +
+\i (00:00:40) QtSignal 1
+\i (00:00:40) updateport SearchPane
+\i (00:00:40) updateport PropPane
+\i (00:00:40) updateport VisibilityPane
+\i (00:00:40) updateport CVPane
+\i (00:00:40) updateport VisibilityPane
+\i (00:00:41) zoom in 1 
+\i (00:00:41) setwindow pcb
+\i (00:00:41) zoom in 3582.99 2309.33
+\i (00:00:41) trapsize 1855
+\i (00:00:42) zoom in 1 
+\i (00:00:42) setwindow pcb
+\i (00:00:42) zoom in 3582.99 2313.04
+\i (00:00:42) trapsize 927
+\i (00:00:42) zoom in 1 
+\i (00:00:42) setwindow pcb
+\i (00:00:42) zoom in 3582.99 2313.05
+\i (00:00:42) trapsize 464
+\i (00:00:42) zoom out 1 
+\i (00:00:42) setwindow pcb
+\i (00:00:42) zoom out 3174.98 2327.88
+\i (00:00:42) trapsize 927
+\i (00:00:43) roam x -96 
+\i (00:00:43) roam x -96
+\i (00:00:43) roam x -96 
+\i (00:00:43) roam x -96
+\i (00:00:44) roam x -96 
+\i (00:00:44) roam x -96
+\i (00:00:44) roam x -96 
+\i (00:00:44) roam x -96
+\i (00:00:44) zoom out 1 
+\i (00:00:44) setwindow pcb
+\i (00:00:44) zoom out 2652.44 2333.45
+\i (00:00:44) trapsize 1855
+\i (00:00:45) zoom in 1 
+\i (00:00:45) setwindow pcb
+\i (00:00:45) zoom in 2285.23 2481.83
+\i (00:00:45) trapsize 927
+\i (00:00:46) roam x -96 
+\i (00:00:46) roam x -96
+\i (00:00:46) roam x -96 
+\i (00:00:46) roam x -96
+\i (00:00:47) pick grid 2125.73 2556.01
+\t (00:00:47) last pick:  2125.73 2556.01
+\i (00:00:47) updateport SearchPane
+\i (00:00:47) updateport PropPane
+\i (00:00:49) roam y -96 
+\i (00:00:49) roam y -96
+\i (00:00:56) pick grid 2040.42 2310.26
+\t (00:00:56) last pick:  2040.42 2310.26
+\i (00:00:56) updateport SearchPane
+\i (00:00:56) updateport PropPane
+\i (00:00:58) zoom in 1 
+\i (00:00:58) setwindow pcb
+\i (00:00:58) zoom in 2353.85 2239.79
+\i (00:00:58) trapsize 464
+\i (00:01:10) roam y -96 
+\i (00:01:10) roam y -96
+\i (00:01:10) roam y -96 
+\i (00:01:10) roam y -96
+\i (00:01:10) roam y -96 
+\i (00:01:10) roam y -96
+\i (00:01:13) pick grid 2383.53 2681.11
+\t (00:01:13) last pick:  2383.53 2681.11
+\i (00:01:13) pick grid 2397.44 2666.27
+\t (00:01:13) last pick:  2397.44 2666.27
+\i (00:01:17) roam y 96 
+\i (00:01:17) roam y 96
+\i (00:01:17) zoom out 1 
+\i (00:01:17) setwindow pcb
+\i (00:01:17) zoom out 2359.42 2588.38
+\i (00:01:17) trapsize 927
+\i (00:01:17) zoom out 1 
+\i (00:01:17) setwindow pcb
+\i (00:01:17) zoom out 2359.42 2588.39
+\i (00:01:17) trapsize 1855
+\i (00:01:20) zoom out 1 
+\i (00:01:20) setwindow pcb
+\i (00:01:20) zoom out 2741.47 1935.56
+\i (00:01:20) trapsize 3709
+\i (00:01:21) zoom in 1 
+\i (00:01:21) setwindow pcb
+\i (00:01:21) zoom in 2222.17 1839.12
+\i (00:01:21) trapsize 1855
+\i (00:01:21) zoom in 1 
+\i (00:01:21) setwindow pcb
+\i (00:01:21) zoom in 2222.17 1839.12
+\i (00:01:21) trapsize 927
+\i (00:01:21) zoom in 1 
+\i (00:01:21) setwindow pcb
+\i (00:01:21) zoom in 2222.17 1839.13
+\i (00:01:21) trapsize 464
+\i (00:01:22) zoom out 1 
+\i (00:01:22) setwindow pcb
+\i (00:01:22) zoom out 2153.55 1939.28
+\i (00:01:22) trapsize 927
+\i (00:45:52) exit 
+\t (00:45:52)     Journal end - Mon Sep  2 12:59:39 2024
