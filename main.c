@@ -25,6 +25,7 @@
 #include "libraries/Hub_Definition/hub_define.h"
 #include "libraries/Hub_Definition/rf_rx_handle.h"
 #include "libraries/Hub_Definition/rf_parser.h"
+#include "libraries/Hub_Definition/hub_protocols.h"
 
 
 #include "em_burtc.h"                                 // for BURTC_IRQHandler
@@ -33,11 +34,13 @@
 #define APP_RTC_TIMEOUT_MS (1000u / APP_RTC_FREQ_HZ)
 #define APP_RTC_TIMEOUT_1S (1000u)
 #define INSTALLATION_CYCLES   360 //((uint16_t)MAX_SLOT)  //20
+#define EZRADIO_FIFO_SIZE       64
+#define MAX_OPTIONAL_SLOT   20
 
 #define FAIL_BEFORE_BC      3
 
 static RAIL_Handle_t rail_handle;                     // RAIL handle for radio operations
-static bool is_hourly_or_explosive_message = false;   // is_hourly_or_explosive_message flag
+//static bool is_hourly_or_explosive_message = false;   // is_hourly_or_explosive_message flag
 
 static WorkingMode g_wCurMode = MODE_SENDING;
 static SendMsgType g_msgType = MSG_DATA;
@@ -45,22 +48,24 @@ static Task       g_nCurTask = TASK_WAIT;
 static uint8_t    g_nRetryCnt = 0;
 static uint8_t    g_nRfFail_cnt = 0;
 static bool       g_bAlert2Send;
-static bool       g_bIsFirstRound;
+bool       g_bIsFirstRound;
 static bool       g_bLsn10Min = false;
 volatile int8_t     g_nDeltaOfSlots;
 static uint16_t   g_time2StartSend;
 volatile uint8_t    g_hours2NextInstl;
-static bool       g_bSwapLgr = false;
+bool       g_bSwapLgr = false;
 static bool       g_bHubRndSlot = false;
 static bool       g_bDataIn;
 volatile  uint16_t  g_nCurTimeSlot;
 static bool     g_bflagWakeup;
+static  uint8_t   g_nHubSlot;
+
 //static int8_t     gReadStack = 0;
 static int8_t     gWriteStack = 0;
 volatile uint16_t g_instlCycleCnt;
 static uint8_t    g_nHour = 0;
-static uint8_t    g_nMin;
-static uint8_t    g_nSec;
+volatile uint8_t    g_nMin;
+volatile uint8_t    g_nSec;
 bool       g_bSendParams = false;
 uint8_t    g_nIndex2SendPrm;
 uint32_t  g_CurSensorLsn;
@@ -68,6 +73,7 @@ bool       g_bOnReset = true;
 uint16_t rtcTickCnt;
 bool g_bMissionCompleted;
 bool     g_bIsMoreData;
+uint16_t  g_time2EndHubSlot;
 
 sl_sleeptimer_timer_handle_t rtc_tick_timer;
 sl_sleeptimer_timer_handle_t rtc10SecTimer;
@@ -205,6 +211,19 @@ static void SetCurrentTask(Task newTask)
   g_nCurTask = newTask;
 }
 
+bool SetHubSlot(uint8_t newSlot)
+{
+  g_nHubSlot = newSlot;
+  printf("new HUBSLOT: %d", g_nHubSlot);
+  // if got unreasonable slot - dont take it
+  if (g_nHubSlot >= MAX_OPTIONAL_SLOT)
+    if (g_bOnReset)
+      return false;
+    else
+      g_nHubSlot = 0;
+  return true;
+}
+
 void InitVarsOnReset()
 {
   g_bOnReset = true;
@@ -230,6 +249,8 @@ void RTC_App_IRQHandler()   //100ms timer
 {
   if (rtcTickCnt > 0)
     rtcTickCnt--;
+  if (g_time2EndHubSlot > 0)
+    g_time2EndHubSlot--;
 }
 
 void RTC_TimeSlot()   //10 sec timer
@@ -237,6 +258,20 @@ void RTC_TimeSlot()   //10 sec timer
   g_nCurTimeSlot++;
 
   g_bflagWakeup = true;
+}
+
+void StartHubSlot()
+{
+  g_wCurMode = MODE_SENDING;
+  g_nCurTask = TASK_BUILD_MSG;
+  g_msgType = MSG_DATA;
+  g_nRetryCnt = 0;
+//  g_nMaxRetryCnt = 0;
+  g_bIsFirstRound = true;
+//  if (g_nRfFail_cnt > 0)  //todo
+//    g_curLgrRfPwr = POWER_OUT_4;
+//  ezr32hg_SetPA_PWR_LVL(g_curLgrRfPwr/*POWER_OUT_127*/);
+  g_time2EndHubSlot = SLOT_INTERVAL_SEC * APP_RTC_FREQ_HZ;
 }
 
 void WakeupRadio()
@@ -424,6 +459,13 @@ void GetNextTask()
     }
 }
 
+void Set10SecTimer()
+{
+  if (sl_sleeptimer_start_periodic_timer_ms(&rtc10SecTimer, APP_RTC_TIMEOUT_1S * SLOT_INTERVAL_SEC, RTC_TimeSlot, NULL, 0, 0) != SL_STATUS_OK)
+
+      printf("failed to set slots timer");
+}
+
 void SyncClock()
 {
   if ((g_nSec % SLOT_INTERVAL_SEC) == 0)
@@ -433,13 +475,13 @@ void SyncClock()
       g_nCurTimeSlot = 0;
     printf("synchronize! slot is: %d", g_nCurTimeSlot);
     // start 10 sec timer
-    if (sl_sleeptimer_start_periodic_timer_ms(&rtc10SecTimer, APP_RTC_TIMEOUT_1S * SLOT_INTERVAL_SEC, RTC_TimeSlot, NULL, 0, 0) != SL_STATUS_OK)
+    Set10SecTimer();
 //    if (ECODE_EMDRV_RTCDRV_OK
 //        != RTCDRV_StartTimer(rtc10SecTimer, rtcdrvTimerTypePeriodic, APP_RTC_TIMEOUT_1S * SLOT_INTERVAL_SEC,
 //                   (RTCDRV_Callback_t)RTC_TimeSlot, NULL) )
-      {
-        printf("failed to set slots timer");
-      }
+//      {
+//        printf("failed to set slots timer");
+//      }
     printf("start installation hour");
     SetCurrentMode(MODE_INSTALLATION);  // g_wCurMode = ;
     rtcTickCnt = SLOT_INTERVAL_SEC * APP_RTC_FREQ_HZ;
@@ -448,6 +490,33 @@ void SyncClock()
     g_bSendParams = true;
     g_nIndex2SendPrm = 0;
   }
+}
+
+void BufferEnvelopeTransmit()
+{
+  uint8_t bufLen = msgOut.Header.m_size;
+    uint8_t radioTxPkt[bufLen];
+  printf("BufferEnvelopeTransmit");
+  if (bufLen >= EZRADIO_FIFO_SIZE)
+  {
+      printf("BufferEnvelopeTransmit: SIZE: %d too long. delete transmission", bufLen);//g_LoggerID = %d", g_LoggerID);
+    return;
+  }
+
+//  if ((g_msgType == MSG_CONFIG) || (g_msgType == MSG_FW_UPDATE) || (g_wCurMode == MODE_WRITE_EEPROM))
+//  {
+//    mntr.m_size++;
+//    bufLen = mntr.m_size;
+//    for ( i = 0; i < bufLen-1; i++)
+//      radioTxPkt[FIRST_FIELD_LEN+i] = (((const uint8_t *) &mntr) [i]);
+//  }
+//  else
+  {
+    memcpy(radioTxPkt, (uint8_t *) &msgOut, bufLen); // Copy the packet
+}
+  radioTxPkt[bufLen] = GetCheckSum(radioTxPkt, bufLen);
+  rf_send( rail_handle, radioTxPkt, bufLen+1);
+
 }
 
 void TaskManager()
@@ -490,7 +559,7 @@ void TaskManager()
          {
 //           if  (g_wCurMode != MODE_INSTALLATION)
 //             DefineEzradio_PWR_LVL(NewMsgStack[gReadStack].Rssi); //todo
-//           BufferEnvelopeTransmit(appRadioHandle);  //todo
+           BufferEnvelopeTransmit();  //todo
            rtcTickCnt = 3;
          }
          ResetAfterReadRow(); //NewMsgStack[gReadStack].Status = CELL_EMPTY;
@@ -520,7 +589,7 @@ void TaskManager()
  #endif
        break;
        case TASK_SEND:
-//         BufferEnvelopeTransmit(appRadioHandle);
+         BufferEnvelopeTransmit();  //todo
          rtcTickCnt = 7;
          if ((g_bOnReset) || (g_LoggerID == DEFAULT_ID))
          {

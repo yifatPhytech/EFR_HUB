@@ -6,6 +6,7 @@
  */
 
 #include "libraries/CommonHeaders/ProtocolDef.h"
+#include "libraries/CommonHeaders/ProtocolMonitorDef.h"
 #include "libraries/CommonHeaders/GlobalDefine.h"
 #include "libraries/system_mode/system_mode.h"
 #include "libraries/Hub_Definition/hub_define.h"
@@ -24,6 +25,7 @@ static int8_t     gReadStack = 0;
 static uint8_t    g_bRadioOK = 0;
 
 Sen_Hub_Rec_Msg msgIn;
+ProtocolMntrHeader mntr;
 
 void ResetAfterReadRow()
 {
@@ -49,6 +51,40 @@ uint16_t GetSecToConnect(uint16_t nSlot)
 
   return (SLOT_INTERVAL_SEC * nSlots2Wait) ;//+ ((slotTickCnt / APP_RTC_FREQ_HZ)) ;//todo add + ((slotTickCnt / APP_RTC_FREQ_HZ)
 }
+
+int16_t CalcDrift()
+{
+  uint8_t m,s, max_m, max_s, min_m, min_s;
+  bool bNeg = false;
+  m = g_nCurTimeSlot / 6;
+  s = 10 * (g_nCurTimeSlot % 6 ) + ((100 - g_time2EndHubSlot) / 10);  // calc seconds from hub slot started
+  printf("hub clock: %d:%d", m,s);
+  if (g_nMin == m)
+    return (s - g_nSec);
+  else
+  {
+    if (g_nMin > m)
+    {
+      max_m = g_nMin;
+      max_s = g_nSec;
+      min_m = m;
+      min_s = s;
+      bNeg = true;
+    }
+    else
+    {
+      max_m = m;
+      max_s = s;
+      min_m = g_nMin;
+      min_s = g_nSec;
+    }
+    int16_t delta = max_m - (min_m + 1) * 60; // calc seconds between minutes
+    delta += (max_s + (60 - min_s));
+    delta *= bNeg;
+    return delta;
+  }
+}
+
 
 bool ParseSensorMsg()
 {
@@ -299,7 +335,8 @@ bool ParseLoggerMsg()
   uint8_t i,  cs;
   uint8_t senIndex, size = NewMsgStack[gReadStack].Buffer[FIRST_FIELD];
   uint8_t res = false;
-/*
+  SendMsgType type;
+
   printf("ParseLoggerMsg. size= %d, gReadStack = %d", size, gReadStack);
   cs = GetCheckSum(&NewMsgStack[gReadStack].Buffer[1],size-1);
   if (NewMsgStack[gReadStack].Buffer[size] != cs)
@@ -309,9 +346,10 @@ bool ParseLoggerMsg()
     return false;
   }
   g_bRadioOK = 0;
+  type = GetCurrentMsgType();
   //copy to struct
   for ( i = 0; i < size; i++)
-    if ((g_msgType == MSG_CONFIG) || (g_msgType == MSG_FW_UPDATE))
+    if ((type == MSG_CONFIG) || (type == MSG_FW_UPDATE))
     {
       ((( uint8_t *) &mntr)[i]) = NewMsgStack[gReadStack].Buffer[i+1];//radioRxPkt[i+1];//NewMsgStack[gReadStack][i+1];
 //      printf("radioRxPkt[%d] = %d", i+1, NewMsgStack[gReadStack].Buffer[i+1]); // radioRxPkt[i+1]);//NewMsgStack[gReadStack][i+1]);
@@ -322,13 +360,13 @@ bool ParseLoggerMsg()
     }
   NewMsgStack[gReadStack].Status = CELL_EMPTY;
 
-  if ((g_msgType != MSG_CONFIG) && (g_msgType != MSG_FW_UPDATE))
+  if ((type != MSG_CONFIG) && (type != MSG_FW_UPDATE))
     if (msgIn.Header.m_addressee != getSensorID()) //myData.m_ID)
       return false;
 
 //  DefineEzradio_PWR_LVL2LGR(NewMsgStack[gReadStack].Rssi);  //todo
   uint32_t sensor_id_from_monitor = little_endian_to_uint32(&mntr.m_buffer[2]);
-  switch (g_msgType)
+  switch (type)
   {
     case MSG_CONFIG:
       if (mntr.m_Header != HEADER_GETID_ACK)
@@ -356,7 +394,7 @@ bool ParseLoggerMsg()
       if (msgIn.Header.m_Header != HEADER_SND_DATA_ACK)
         break;
 
-      if (g_bAlert2Send == false)
+//      if (g_bAlert2Send == false)
       {
         g_nMin = msgIn.RecAckPayload.m_min;
         g_nSec = msgIn.RecAckPayload.m_sec;
@@ -365,28 +403,24 @@ bool ParseLoggerMsg()
           uint8_t t = (100 - g_time2EndHubSlot) / 10; // calc seconds from hub slot started
           int16_t dl = CalcDrift();
           printf("logger time: %d:%d. Sec from Slot started: %d drift: %d", g_nMin, g_nSec, t, dl);
-          if ((dl > -10) && (dl < 0))
-          {
-            uint16_t t = g_time2EndHubSlot + (dl * 10);
-            printf("set new timer: %d", t);
-            // reset 10 sec timer
-            if (ECODE_EMDRV_RTCDRV_OK != RTCDRV_StartTimer(rtc10SecTimer, rtcdrvTimerTypePeriodic, t * 100,
-                               (RTCDRV_Callback_t)RTC_FirstTimeSlot, NULL) )
-              {
-              printf("failed to reset slots timer");
-              }
-          }
+//          if ((dl > -10) && (dl < 0))     //todo
+//          {
+//            uint16_t t = g_time2EndHubSlot + (dl * 10);
+//            printf("set new timer: %d", t);
+//            // reset 10 sec timer
+//            Set10SecTimer();
+//          }
           // check if slot has drift in time
           uint16_t curSlot = (g_nMin * 60 + g_nSec - t) / SLOT_INTERVAL_SEC;
-          if ((curSlot != g_nCurTimeSlot))// && (!g_bOnReset) && (g_bIsFirstRound == true))
+          if ((curSlot != g_nCurTimeSlot))
           {
             g_nDeltaOfSlots = g_nCurTimeSlot - curSlot; //
             printf("different between hub slot to rec slot of %d", g_nDeltaOfSlots);
-            if ((g_nDeltaOfSlots != -1) && (g_nDeltaOfSlots != -2) && (g_nDeltaOfSlots != 1))
-            {
-              g_nCurTimeSlot = curSlot;
-              SetSensorsDeltaUpdt();
-            }
+//            if ((g_nDeltaOfSlots != -1) && (g_nDeltaOfSlots != -2) && (g_nDeltaOfSlots != 1))   //todo
+//            {
+//              g_nCurTimeSlot = curSlot;
+//              SetSensorsDeltaUpdt();
+//            }
           }
         }
         // if it was broadcast - save the logger id and  HUBSLOT number
@@ -400,35 +434,12 @@ bool ParseLoggerMsg()
         //if logger sent new hubslot - change it
         if (msgIn.RecAckPayload.m_slotMin != 0xFF)
         {
-          g_nHubSlot = msgIn.RecAckPayload.m_slotMin;
-          printf("HUBSLOT: %d", g_nHubSlot);
-          // if got unreasonable slot - dont take it
-          if (g_nHubSlot >= MAX_OPTIONAL_SLOT)
-            if (g_bOnReset)
+            if (SetHubSlot(msgIn.RecAckPayload.m_slotMin) == false)
               return false;
-            else
-              g_nHubSlot = 0;
         }
       }
-      // sign all data that was send OK - can be removed
-      senIndex = 0;
-      do
-      {
-        senIndex = GetNextSensor(senIndex);
-        if (senIndex < MAX_DATA)
-        {
-          if (MySensorsArr[senIndex].Status == SEN_STATUS_SEND_DATA)
-          {
-            MySensorsArr[senIndex].Status = SEN_STATUS_CELL_EMPTY;
-            MySensorsArr[senIndex].msr = NO_DATA;
-            for (uint8_t j = 0; j < MAX_HSTR_CNT; j++)
-              MySensorsArr[senIndex].HstrData[j] = NO_DATA;
-            printf("data of index %d sent OK", senIndex);
-          }
-          senIndex++;
-        }
-      }
-      while (senIndex < MAX_DATA);
+      // sign all data that was send OK - can be removedvoid ResetAllSensorsData()
+      ResetAllSensorsData();
 
       res = true;
       break;
@@ -463,17 +474,17 @@ bool ParseLoggerMsg()
       while (senIndex < MAX_DATA);
       res = true;
       break;
-    case MSG_FW_UPDATE:
-      printf("got update");
-      if (mntr.m_Header == HEADER_HUB_UPDATE_START_PKT)
-      {
-        SavePacketPrm(&radioRxPkt[3]);
-        res = true;
-      }
-      break;
+//    case MSG_FW_UPDATE:
+//      printf("got update");
+//      if (mntr.m_Header == HEADER_HUB_UPDATE_START_PKT)
+//      {
+//        SavePacketPrm(&radioRxPkt[3]);
+//        res = true;
+//      }
+//      break;
     default:
       break;
   }//switch (msg_type)
-*/
+
   return res;
 }

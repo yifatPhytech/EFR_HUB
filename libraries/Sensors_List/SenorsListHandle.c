@@ -229,3 +229,25 @@ int8_t InsertNewSensor(uint32_t senID,uint8_t senType, bool bMulti)
   return -1;
 }
 
+void ResetAllSensorsData()
+{
+
+  uint8_t senIndex = 0;
+  do
+  {
+    senIndex = GetNextSensor(senIndex);
+    if (senIndex < MAX_DATA)
+    {
+      if (MySensorsArr[senIndex].Status == SEN_STATUS_SEND_DATA)
+      {
+        MySensorsArr[senIndex].Status = SEN_STATUS_CELL_EMPTY;
+        MySensorsArr[senIndex].msr = NO_DATA;
+        for (uint8_t j = 0; j < MAX_HSTR_CNT; j++)
+          MySensorsArr[senIndex].HstrData[j] = NO_DATA;
+        printf("data of index %d sent OK", senIndex);
+      }
+      senIndex++;
+    }
+  }
+  while (senIndex < MAX_DATA);
+}

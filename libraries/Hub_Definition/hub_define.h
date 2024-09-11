@@ -117,6 +117,8 @@ typedef struct _sensor
 SendMsgType GetCurrentMsgType();
 uint8_t GetCheckSum(uint8_t* buf, uint8_t len);
 WorkingMode GetCurrentMode( );
+bool SetHubSlot(uint8_t newSlot);
+void Set10SecTimer();
 
 extern uint32_t g_LoggerID;
 extern bool     g_bIsMoreData;
@@ -130,6 +132,13 @@ extern volatile int8_t     g_nDeltaOfSlots;
 extern uint32_t g_CurSensorLsn;
 extern bool g_bMissionCompleted;
 extern volatile  uint16_t  g_nCurTimeSlot;
+extern bool       g_bSwapLgr;
+extern uint16_t g_time2EndHubSlot;
+extern volatile uint8_t    g_nMin;
+extern volatile uint8_t    g_nSec;
+extern bool       g_bIsFirstRound;
+
+
 
 
 

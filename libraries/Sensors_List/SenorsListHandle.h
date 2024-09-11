@@ -32,6 +32,7 @@ void RemoveSensor(uint8_t i);
 int8_t InsertNewSensor(uint32_t senID,uint8_t senType, bool bMulti);
 void writeAllSnsToFlash(void);
 void readAllSnsFromFlash(void);
+void ResetAllSensorsData();
 
 
 
