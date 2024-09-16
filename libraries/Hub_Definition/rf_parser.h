@@ -4,6 +4,5 @@
 bool ParseSensorMsg();
 bool ParseLoggerMsg();
 void ResetAfterReadRow();
-bool IsNewRxData();
 
 #endif //RF_PARSER

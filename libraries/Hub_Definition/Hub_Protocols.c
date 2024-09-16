@@ -13,6 +13,7 @@
 #include "libraries/system_mode/system_mode.h"
 #include "libraries/Hub_Definition/hub_define.h"
 #include "libraries/Hub_Definition/hub_protocols.h"
+#include "libraries/phytech_protocol/phytech_protocol.h"
 
 
 Sen_Hub_Rec_Msg msgOut;

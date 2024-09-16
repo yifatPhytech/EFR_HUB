@@ -11,6 +11,7 @@
 #include "libraries/flash_storage/flash_storage.h"
 #include "libraries/system_mode/system_mode.h"
 #include "libraries/tools/tools.h"
+#include "libraries/CommonHeaders/GlobalDefine.h"
 #include <string.h> // for strcmp
 #include <stdio.h> // for printf
 #include "libraries/Hub_Definition/hub_define.h"

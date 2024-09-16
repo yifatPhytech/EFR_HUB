@@ -70,7 +70,9 @@ typedef enum _Headers
   HEADER_HUB_STOP              = 0xCE,  // 206
   HEADER_HUB_STOP_ACK          = 0xCF,  // 207
   HEADER_TEST_RF               = 0xD1,  // 209
-  HEADER_TEST_RF_ACK           = 0xD2   // 210
+  HEADER_TEST_RF_ACK           = 0xD2,   // 210
+  HEADER_START_TECH_MODE       = 0xD3,
+  HEADER_START_TECH_MODE_ACK   =   0xD4,
 } Headers;
 
 // Sensor Types

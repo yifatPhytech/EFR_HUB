@@ -5,7 +5,6 @@
  * Author: itay
  */
 
-#include "libraries/RADIO/radio_handler.h"
 
 
 #include "sl_flex_rail_package_assistant.h"
@@ -37,6 +36,12 @@
 #include "libraries/system_mode/system_mode.h"
 #include "libraries/RADIO/rf_decoder.h"
 #include "libraries/UART/UARTComm.h"
+#include "libraries/Hub_Definition/hub_protocols.h"
+#include "libraries/Hub_Definition/hub_protocols.h"
+#include "libraries/Hub_Definition/rf_rx_handle.h"
+#include "libraries/RADIO/radio_handler.h"
+
+#define EZRADIO_FIFO_SIZE       64
 
 
 /// Transmit data length
@@ -46,17 +51,20 @@
 typedef enum
 {
   S_PACKET_RECEIVED,
+  S_PACKET_START_SEND,
   S_PACKET_SENT,
   S_RX_PACKET_ERROR,
   S_TX_PACKET_ERROR,
-  S_CALIBRATION_ERROR,
+  S_PACKET_WAIT_4_PARSE,
   S_IDLE,
+  S_SET_RF_PWR,
 } state_t;
 
 /// tx_requested and rx_requested boolean variables
 volatile bool tx_requested = false;
 volatile bool rx_requested = true;
-
+volatile rf_power g_curRfPwr;
+volatile rf_power g_newRfPwr;
 /// Transmit packet
 //uint8_t out_packet[TX_PAYLOAD_LENGTH];
 uint8_t out_packet[21] =
@@ -81,16 +89,27 @@ static __ALIGNED(RAIL_FIFO_ALIGNMENT) uint8_t rx_fifo[SL_FLEX_RAIL_RX_FIFO_SIZE]
 
 static __ALIGNED(RAIL_FIFO_ALIGNMENT) uint8_t tx_fifo[SL_FLEX_RAIL_TX_FIFO_SIZE];
 
+static uint8_t dataSize = 0;
 /// Flags to update state machine from interrupt
 static volatile bool packet_recieved = false;
 static volatile bool packet_sent = false;
+static volatile bool packet_to_send = false;
 static volatile bool rx_error = false;
 static volatile bool tx_error = false;
-static volatile bool cal_error = false;
+static volatile bool rf_pwr_change = false;
 
 // -----------------------------------------------------------------------------
 //                          Public Function Definitions
 // -----------------------------------------------------------------------------
+
+void ChangeRfPower(RAIL_Handle_t rail_handle, rf_power pwr)
+{
+  if (g_curRfPwr == pwr)
+    return;
+  g_curRfPwr = pwr;
+  RAIL_ConfigTxPower(rail_handle, tx_power_dbm[(uint8_t)pwr]);
+}
+
 /******************************************************************************
  * Application state machine, called infinitely
  *****************************************************************************/
@@ -112,6 +131,11 @@ void app_process_action(RAIL_Handle_t rail_handle)
       packet_recieved = false;
       state = S_PACKET_RECEIVED;
     }
+  else if (packet_to_send)
+    {
+      packet_to_send = false;
+      state = S_PACKET_START_SEND;
+    }
   else if (packet_sent)
     {
       packet_sent = false;
@@ -127,10 +151,10 @@ void app_process_action(RAIL_Handle_t rail_handle)
       tx_error = false;
       state = S_TX_PACKET_ERROR;
     }
-  else if (cal_error)
+  else if (rf_pwr_change)
     {
-      cal_error = false;
-      state = S_CALIBRATION_ERROR;
+      rf_pwr_change = false;
+      state = S_SET_RF_PWR;
     }
 
   switch (state)
@@ -156,16 +180,19 @@ void app_process_action(RAIL_Handle_t rail_handle)
               }
             if (rx_requested)
               {
+                int16_t nRSSI = RAIL_GetRssi(rail_handle, false);
                 printf_rx_packet(start_of_packet, packet_size);
-                // decode RX packet
-                if (getSystemMode() == ACTIVE_MODE)
-                  {
-                    decode_rf_packet(start_of_packet, packet_size);
-                  }
-                else  // MONITOR_MODE
-                  {
-                    decode_monitor_rf_packet(start_of_packet, packet_size);
-                  }
+                SaveNewPacket(start_of_packet, packet_size, nRSSI);
+
+                // wait to decode RX packet
+//                if (getSystemMode() == ACTIVE_MODE)
+//                  {
+//                    decode_rf_packet(start_of_packet, packet_size);
+//                  }
+//                else  // MONITOR_MODE
+//                  {
+//                    decode_monitor_rf_packet(start_of_packet, packet_size);
+//                  }
 #if defined(SL_CATALOG_RAIL_SIMPLE_CPC_PRESENT)
                 sl_rail_simple_cpc_transmit(packet_size, start_of_packet);
 #endif
@@ -175,7 +202,10 @@ void app_process_action(RAIL_Handle_t rail_handle)
         state = S_IDLE;
       }
       break;
-
+    case S_PACKET_START_SEND:
+      rf_send(rail_handle, tx_fifo, dataSize);
+      state = S_IDLE;
+      break;
     case S_PACKET_SENT:
       {
 #if defined(SL_CATALOG_APP_LOG_PRESENT)
@@ -214,6 +244,10 @@ void app_process_action(RAIL_Handle_t rail_handle)
       }
       break;
 
+    case S_SET_RF_PWR:
+      ChangeRfPower(rail_handle, g_newRfPwr);
+      state = S_IDLE;
+      break;
     case S_IDLE:
       {
         if (tx_requested)
@@ -231,25 +265,26 @@ void app_process_action(RAIL_Handle_t rail_handle)
       }
       break;
 
-    case S_CALIBRATION_ERROR:
-      {
-        calibration_status_buff = calibration_status;
-#if defined(SL_CATALOG_APP_LOG_PRESENT)
-        app_log_error("Radio Calibration Error occurred\nEvents: %llX\nRAIL_Calibrate() result:%d\n",
-                      error_code,
-                      calibration_status_buff);
-#endif
-        state = S_IDLE;
-        break;
+//    case S_CALIBRATION_ERROR:
+//      {
+//        calibration_status_buff = calibration_status;
+//#if defined(SL_CATALOG_APP_LOG_PRESENT)
+//        app_log_error("Radio Calibration Error occurred\nEvents: %llX\nRAIL_Calibrate() result:%d\n",
+//                      error_code,
+//                      calibration_status_buff);
+//#endif
+//        state = S_IDLE;
+//        break;
     default:
       // Unexpected state
 #if defined(SL_CATALOG_APP_LOG_PRESENT)
       app_log_error("Unexpected Simple TRX state occurred:%d\n", state);
 #endif
-      }
-      break;
-  }
+      } //switch
+//      break;
+//  }
 }
+
 
 /******************************************************************************
  * RAIL callback, called if a RAIL event occurs.
@@ -264,6 +299,7 @@ void sl_rail_util_on_event(RAIL_Handle_t rail_handle, RAIL_Events_t events)
         {
           // Keep the packet in the radio buffer, download it later at the state machine
           RAIL_HoldRxPacket(rail_handle);
+
           packet_recieved = true;
         }
       else
@@ -287,14 +323,14 @@ void sl_rail_util_on_event(RAIL_Handle_t rail_handle, RAIL_Events_t events)
     }
 
   // Perform all calibrations when needed
-  if ( events & RAIL_EVENT_CAL_NEEDED )
-    {
-      calibration_status = RAIL_Calibrate(rail_handle, NULL, RAIL_CAL_ALL_PENDING);
-      if (calibration_status != RAIL_STATUS_NO_ERROR)
-        {
-          cal_error = true;
-        }
-    }
+//  if ( events & RAIL_EVENT_CAL_NEEDED )
+//    {
+//      calibration_status = RAIL_Calibrate(rail_handle, NULL, RAIL_CAL_ALL_PENDING);
+//      if (calibration_status != RAIL_STATUS_NO_ERROR)
+//        {
+//          cal_error = true;
+//        }
+//    }
 #if defined(SL_CATALOG_KERNEL_PRESENT)
   app_task_notify();
 #endif
@@ -487,4 +523,39 @@ RAIL_Status_t rf_send_adc_results(RAIL_Handle_t rail_handle, IADC_Result_t *adcR
          (uint32_t)adcResults[2].data,
          (uint32_t)adcResults[3].data);
   return rf_send(rail_handle, (uint8_t *)adcResults, length);
+}
+
+void BufferEnvelopeTransmit()
+{
+  uint8_t bufLen = msgOut.Header.m_size;
+    uint8_t radioTxPkt[bufLen];
+  printf("BufferEnvelopeTransmit");
+  if (bufLen >= 64)
+  {
+      printf("BufferEnvelopeTransmit: SIZE: %d too long. delete transmission", bufLen);//g_LoggerID = %d", g_LoggerID);
+    return;
+  }
+
+//  if ((g_msgType == MSG_CONFIG) || (g_msgType == MSG_FW_UPDATE) || (g_wCurMode == MODE_WRITE_EEPROM))
+//  {
+//    mntr.m_size++;
+//    bufLen = mntr.m_size;
+//    for ( i = 0; i < bufLen-1; i++)
+//      radioTxPkt[FIRST_FIELD_LEN+i] = (((const uint8_t *) &mntr) [i]);
+//  }
+//  else
+  {
+    memcpy(tx_fifo, (uint8_t *) &msgOut, bufLen); // Copy the packet
+}
+  tx_fifo[bufLen] = GetCheckSum(tx_fifo, bufLen);
+  dataSize = bufLen;
+  packet_to_send = true;
+//  rf_send( rail_handle, radioTxPkt, bufLen+1);
+
+}
+
+void SetNewRfPower(rf_power newPwr)
+{
+  rf_pwr_change = true;
+  g_newRfPwr = newPwr;
 }

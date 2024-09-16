@@ -6,6 +6,7 @@
 
 #define APP_RTC_FREQ_HZ 10u
 #define MAX_SEND_RETRY    4
+#define MAX_EZR_BUFFER_SIZE 64
 
 #define DEFAULT_ID  0xFFFFFFFF
 #define MAX_SENSOR_SLOT     60
@@ -119,6 +120,8 @@ uint8_t GetCheckSum(uint8_t* buf, uint8_t len);
 WorkingMode GetCurrentMode( );
 bool SetHubSlot(uint8_t newSlot);
 void Set10SecTimer();
+void GoToSleep();
+
 
 extern uint32_t g_LoggerID;
 extern bool     g_bIsMoreData;

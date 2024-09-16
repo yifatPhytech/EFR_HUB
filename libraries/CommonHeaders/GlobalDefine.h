@@ -26,7 +26,7 @@
 //	CONFIG_STAGE_1,
 //	CONFIG_STAGE_2,
 //}ConfigStage;
-
+/*
 typedef enum _Headers
 {
 	HEADER_SEN_LOST = 		0xB0,
@@ -78,7 +78,7 @@ typedef enum _Headers
 	HEADER_TEST_RF_ACK	= 	0xD2,
 	HEADER_START_TECH_MODE=	0xD3,
 	HEADER_START_TECH_MODE_ACK	= 	0xD4,
-}Headers;
+}Headers;*/
 
 typedef enum _ExtraDef
 {
@@ -135,10 +135,7 @@ typedef union _FloatToBytes
 #define	EXTRA_STATUS_NEW		0x01
 #define	EXTRA_STATUS_OFF		0x02
 
-#define TYPE_NONE	0
-//#define TYPE_PIVOT	67
-//#define TYPE_TENS	71
-//#define TYPE_SMS	72
+/*#define TYPE_NONE	0
 #define TYPE_SD			99
 #define TYPE_DER		100
 #define TYPE_FI			101
@@ -176,7 +173,7 @@ typedef union _FloatToBytes
 #define TYPE_SFI_102_NG		177
 #define TYPE_PRLL_FERT		178
 #define TYPE_PRS_ON_105		191
-
+*/
 #define FIRST_FIELD		0
 #define FIRST_FIELD_LEN	1
 

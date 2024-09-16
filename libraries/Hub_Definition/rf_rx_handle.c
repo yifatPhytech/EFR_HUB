@@ -8,7 +8,13 @@
 #include "libraries/Hub_Definition/rf_rx_handle.h"
 
 InputRecord NewMsgStack[MAX_MSG_IN_STACK];
+volatile int8_t     gReadStack = 0;
 
+
+void ResetAfterReadRow()
+{
+  ResetRow(gReadStack);
+}
 
 uint8_t GetFirstBusyCell()
 {
@@ -37,4 +43,30 @@ void ResetAll()
   for (uint8_t i = 0; i < MAX_MSG_IN_STACK; i++)
     NewMsgStack[i].Status = CELL_EMPTY;
 
+}
+
+bool IsNewRxData()
+{
+    gReadStack = GetFirstBusyCell();
+    if (gReadStack != MAX_MSG_IN_STACK)
+        return true;
+    return false;
+}
+
+bool SaveNewPacket(uint8_t* radioRxPkt, uint16_t packet_length, int16_t nRssi)
+{
+  uint8_t gWriteStack = GetFirstEmptyCell();
+      if (gWriteStack == MAX_MSG_IN_STACK)
+      {
+        printf("doesn't have empty cell. missed msg");
+        return false;
+      }
+      if (packet_length > MAX_EZR_BUFFER_SIZE)
+        return false;
+      memcpy(&NewMsgStack[gWriteStack].Buffer, radioRxPkt, packet_length);
+//      for (int8_t i = 0; i <= radioRxPkt[0]+1; i++)
+//        NewMsgStack[gWriteStack].Buffer[i] = radioRxPkt[i];
+      NewMsgStack[gWriteStack].Rssi = nRssi;
+      NewMsgStack[gWriteStack].Status = CELL_BUSY;
+      return true;
 }

@@ -26,6 +26,8 @@
 #include "libraries/Hub_Definition/rf_rx_handle.h"
 #include "libraries/Hub_Definition/rf_parser.h"
 #include "libraries/Hub_Definition/hub_protocols.h"
+#include "libraries/Hub_Definition/sensor_sm.h"
+#include "libraries/Hub_Definition/logger_sm.h"
 
 
 #include "em_burtc.h"                                 // for BURTC_IRQHandler
@@ -34,24 +36,19 @@
 #define APP_RTC_TIMEOUT_MS (1000u / APP_RTC_FREQ_HZ)
 #define APP_RTC_TIMEOUT_1S (1000u)
 #define INSTALLATION_CYCLES   360 //((uint16_t)MAX_SLOT)  //20
-#define EZRADIO_FIFO_SIZE       64
 #define MAX_OPTIONAL_SLOT   20
 
-#define FAIL_BEFORE_BC      3
 
 static RAIL_Handle_t rail_handle;                     // RAIL handle for radio operations
 //static bool is_hourly_or_explosive_message = false;   // is_hourly_or_explosive_message flag
 
 static WorkingMode g_wCurMode = MODE_SENDING;
-static SendMsgType g_msgType = MSG_DATA;
 static Task       g_nCurTask = TASK_WAIT;
 static uint8_t    g_nRetryCnt = 0;
-static uint8_t    g_nRfFail_cnt = 0;
 static bool       g_bAlert2Send;
 bool       g_bIsFirstRound;
 static bool       g_bLsn10Min = false;
 volatile int8_t     g_nDeltaOfSlots;
-static uint16_t   g_time2StartSend;
 volatile uint8_t    g_hours2NextInstl;
 bool       g_bSwapLgr = false;
 static bool       g_bHubRndSlot = false;
@@ -122,46 +119,7 @@ static const char *GetTaskName(Task task)
   return task < sizeof(taskNames) / sizeof(taskNames[0]) ? taskNames[task] : "???";
 }
 
-static const char *GetMessageTypeName(SendMsgType msgType)
-{
-  static const char *msgTypeNames[] = {
-    [MSG_NONE] = "NONE",
-    [MSG_DATA] = "DATA",
-    [MSG_SNS_PRM] = "SNS_PRM",
-    [MSG_HUB_PRM] = "HUB_PRM",
-    [MSG_CONFIG] = "CONFIG",
-    [MSG_FW_UPDATE] = "FW_UPDATE",
-    [MSG_CHANGE_SLOT] = "CHANGE_SLOT",
-    [MSG_FOTA] = "FOTA",
-  };
 
-  return msgType < sizeof(msgTypeNames) / sizeof(msgTypeNames[0]) ? msgTypeNames[msgType] : "???";
-}
-
-static void SetCurrentMsgType(SendMsgType newMsgType)
-{
-//  if (FOTA_HUB_CLIENT_IsPrepared() || FOTA_HUB_CLIENT_IsEnabled())
-//  {
-//    if (newMsgType != MSG_HUB_PRM && newMsgType != MSG_FOTA)
-//    {
-//      logw("%s disabled during FOTA", GetMessageTypeName(newMsgType));
-//      newMsgType = FOTA_HUB_CLIENT_IsPrepared() || FOTA_HUB_CLIENT_IsDone() ? MSG_HUB_PRM : MSG_FOTA;
-//    }
-//  }
-
-  if (newMsgType == g_msgType)
-  {
-    return;
-  }
-
-  printf("msgType %s (prev %s)", GetMessageTypeName(newMsgType), GetMessageTypeName(g_msgType));
-  g_msgType = newMsgType;
-}
-
-SendMsgType GetCurrentMsgType()
-{
-  return g_msgType ;
-}
 
 static void SetCurrentMode(WorkingMode newMode)
 {
@@ -233,7 +191,7 @@ void InitVarsOnReset()
   g_bSendParams = false;
   g_bLsn10Min = false;
   g_nDeltaOfSlots = 0;
-  g_time2StartSend = 0;
+//  g_time2StartSend = 0;
   g_nIndex2SendPrm = 0;
   g_hours2NextInstl = 0;
   g_bSwapLgr = false;
@@ -258,20 +216,6 @@ void RTC_TimeSlot()   //10 sec timer
   g_nCurTimeSlot++;
 
   g_bflagWakeup = true;
-}
-
-void StartHubSlot()
-{
-  g_wCurMode = MODE_SENDING;
-  g_nCurTask = TASK_BUILD_MSG;
-  g_msgType = MSG_DATA;
-  g_nRetryCnt = 0;
-//  g_nMaxRetryCnt = 0;
-  g_bIsFirstRound = true;
-//  if (g_nRfFail_cnt > 0)  //todo
-//    g_curLgrRfPwr = POWER_OUT_4;
-//  ezr32hg_SetPA_PWR_LVL(g_curLgrRfPwr/*POWER_OUT_127*/);
-  g_time2EndHubSlot = SLOT_INTERVAL_SEC * APP_RTC_FREQ_HZ;
 }
 
 void WakeupRadio()
@@ -331,12 +275,8 @@ void GoToSleep()
     EMU_EnterEM2(true);
 }
 
-void GetNextMission(bool bPrevMissionOK)
-{
 
-}
-
-void GetNextTask()
+/*void GetNextTask()
 {
 //  if (g_nMaxRetryCnt < g_nRetryCnt)
 //    g_nMaxRetryCnt = g_nRetryCnt;
@@ -348,7 +288,7 @@ void GetNextTask()
     if (ParseLoggerMsg() == true)
     {
       g_nRetryCnt = 0;
-      g_nRfFail_cnt = 0;
+//      g_nRfFail_cnt = 0;
       printf("Parse OK");
       if (g_msgType == MSG_CONFIG)
         g_nCurTask = TASK_BUILD_MSG;
@@ -424,7 +364,7 @@ void GetNextTask()
       if (g_nRetryCnt < MAX_SEND_RETRY)
       {
         g_nCurTask = TASK_BUILD_MSG;//TASK_SEND;
-        g_time2StartSend = (myData.m_ID % 100)/ 2;
+//        g_time2StartSend = (myData.m_ID % 100)/ 2;
 //        if (g_nRetryCnt == 1)   //todo
 //          g_curLgrRfPwr = POWER_OUT_13;
 //        if (g_nRetryCnt > 1)
@@ -440,25 +380,25 @@ void GetNextTask()
         }
         else
         {
-          g_nRfFail_cnt++;
-          printf("reset fifo. g_nRfFail_cnt = %d", g_nRfFail_cnt);
+//          g_nRfFail_cnt++;
+//          printf("reset fifo. g_nRfFail_cnt = %d", g_nRfFail_cnt);
 //          ezradioResetTRxFifo();
           GetNextMission(false);  //todo
 //          if (g_wCurMode == MODE_SLEEPING)
-            if (g_nRfFail_cnt >= FAIL_BEFORE_BC)//2)
-            {
-              g_nRfFail_cnt = 0;
-              g_LoggerID = DEFAULT_ID;
-              printf("reset radio. g_nRfFail_cnt = %d", g_nRfFail_cnt);
-//              ezradio_reset();
-//              ezradio_configuration_init(MY_Radio_Configuration_Data_Array);
-//              ezradioResetTRxFifo();
-//              ezradioStartRx(appRadioHandle);
-            }
+//            if (g_nRfFail_cnt >= FAIL_BEFORE_BC)//2)
+//            {
+//              g_nRfFail_cnt = 0;
+//              g_LoggerID = DEFAULT_ID;
+//              printf("reset radio. g_nRfFail_cnt = %d", g_nRfFail_cnt);
+////              ezradio_reset();
+////              ezradio_configuration_init(MY_Radio_Configuration_Data_Array);
+////              ezradioResetTRxFifo();
+////              ezradioStartRx(appRadioHandle);
+//            }
         }
     }
 }
-
+*/
 void Set10SecTimer()
 {
   if (sl_sleeptimer_start_periodic_timer_ms(&rtc10SecTimer, APP_RTC_TIMEOUT_1S * SLOT_INTERVAL_SEC, RTC_TimeSlot, NULL, 0, 0) != SL_STATUS_OK)
@@ -492,32 +432,6 @@ void SyncClock()
   }
 }
 
-void BufferEnvelopeTransmit()
-{
-  uint8_t bufLen = msgOut.Header.m_size;
-    uint8_t radioTxPkt[bufLen];
-  printf("BufferEnvelopeTransmit");
-  if (bufLen >= EZRADIO_FIFO_SIZE)
-  {
-      printf("BufferEnvelopeTransmit: SIZE: %d too long. delete transmission", bufLen);//g_LoggerID = %d", g_LoggerID);
-    return;
-  }
-
-//  if ((g_msgType == MSG_CONFIG) || (g_msgType == MSG_FW_UPDATE) || (g_wCurMode == MODE_WRITE_EEPROM))
-//  {
-//    mntr.m_size++;
-//    bufLen = mntr.m_size;
-//    for ( i = 0; i < bufLen-1; i++)
-//      radioTxPkt[FIRST_FIELD_LEN+i] = (((const uint8_t *) &mntr) [i]);
-//  }
-//  else
-  {
-    memcpy(radioTxPkt, (uint8_t *) &msgOut, bufLen); // Copy the packet
-}
-  radioTxPkt[bufLen] = GetCheckSum(radioTxPkt, bufLen);
-  rf_send( rail_handle, radioTxPkt, bufLen+1);
-
-}
 
 void TaskManager()
 {
@@ -578,9 +492,9 @@ void TaskManager()
        switch (g_nCurTask)
        {
        case TASK_BUILD_MSG:
-         if (g_time2StartSend > 0)
-           break;
-         WakeupRadio();
+//         if (g_time2StartSend > 0)
+//           break;
+//         WakeupRadio();
          BuildTx();
          SetCurrentTask(TASK_SEND);
  #ifdef POWER_ON_RST
@@ -595,15 +509,15 @@ void TaskManager()
          {
            rtcTickCnt = 25;
          }
-       if (g_msgType == MSG_CONFIG)
-         rtcTickCnt = 50;
-       SetCurrentTask(TASK_WAIT);
+//       if (g_msgType == MSG_CONFIG)
+//         rtcTickCnt = 50;
+//       SetCurrentTask(TASK_WAIT);
 
        break;
-       case TASK_WAIT:
-         GetNextTask();
-
-       break;
+//       case TASK_WAIT:
+//         GetNextTask();
+//
+//       break;
        case TASK_SYNC:
          SyncClock();
        break;
@@ -677,7 +591,7 @@ int main(void)
   InitSensorArray();
   InitSnsParams();
   SetCurrentMode(MODE_SENDING);
-  SetCurrentMsgType(MSG_DATA);
+//  SetCurrentMsgType(MSG_DATA);
   SetCurrentTask(TASK_BUILD_MSG);
   InitVarsOnReset();
   BlinkLED_onLED0();
@@ -696,8 +610,10 @@ int main(void)
             if (ALLOW_BLINK && (NonBlockingDelay_check(&led_interval_instance))) BlinkLED_toggleLED0();  // Toggle LED if delay met
             Read_ON_OFF_Button();
             TaskManager();
-            rf_state_machine(rail_handle);    // Process RF state machine
+//            rf_state_machine(rail_handle);    // Process RF state machine
             app_process_action(rail_handle);  // Process radio app actions
+            SensorStateMachine();
+            LoggerStateMachine();
             UARTComm_process_action();        // Process UART actions
             if (ALLOW_SLEEP && (SLEEP_IMMEDIATELY == true || NonBlockingDelay_check(&sleepInstance))) SMTM_EnterDeepSleep();  // Sleep if conditions met
           }

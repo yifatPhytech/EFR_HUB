@@ -1,8 +1,8 @@
 
 #ifndef PROTOCOL_BL_DEF_H
 #define PROTOCOL_BL_DEF_H
+#include "libraries/Hub_Definition/hub_define.h"
 
-#define MAX_EZR_BUFFER_SIZE	64
 
 typedef struct _ProtocolBootloaderHeader
 {
@@ -13,11 +13,11 @@ typedef struct _ProtocolBootloaderHeader
 	uint32_t 	m_ID;
 } PrtlBLHdr;
 
-typedef struct _ProtocolBootloader
-{
-	PrtlBLHdr	m_Header;
-	uint8_t		m_Buffer[MAX_EZR_BUFFER_SIZE - sizeof(PrtlBLHdr)];
-} PrtlBL;
+//typedef struct _ProtocolBootloader
+//{
+//	PrtlBLHdr	m_Header;
+//	uint8_t		m_Buffer[MAX_EZRr_BUFFER_SIZE - sizeof(PrtlBLHdr)];
+//} PrtlBL;
 
 typedef struct _Sen_Bl_Msg
 {

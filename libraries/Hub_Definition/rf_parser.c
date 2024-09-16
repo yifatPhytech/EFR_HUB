@@ -16,29 +16,18 @@
 #include "libraries/Hub_Definition/hub_protocols.h"
 #include "libraries/Sensors_List/SenorsListHandle.h"
 #include "libraries/Sensors_List/slot_Handle.h"
+#include "libraries/phytech_protocol/phytech_protocol.h"
+#include "libraries/Hub_Definition/logger_sm.h"
 
 #define MIN_RSSI_4_ANSWER 60
 #define MIN_RSSI_4_DELAY  100
 #define DELAY_ACK_MS_LENGTH 150
 
-static int8_t     gReadStack = 0;
-static uint8_t    g_bRadioOK = 0;
 
 Sen_Hub_Rec_Msg msgIn;
 ProtocolMntrHeader mntr;
+static uint8_t    g_bRadioOK = 0;
 
-void ResetAfterReadRow()
-{
-  ResetRow(gReadStack);
-}
-
-bool IsNewRxData()
-{
-    gReadStack = GetFirstBusyCell();
-    if (gReadStack != MAX_MSG_IN_STACK)
-        return true;
-    return false;
-}
 
 uint16_t GetSecToConnect(uint16_t nSlot)
 {
@@ -364,7 +353,7 @@ bool ParseLoggerMsg()
     if (msgIn.Header.m_addressee != getSensorID()) //myData.m_ID)
       return false;
 
-//  DefineEzradio_PWR_LVL2LGR(NewMsgStack[gReadStack].Rssi);  //todo
+  DefineRadio_PWR_LVL2LGR(NewMsgStack[gReadStack].Rssi);  //todo
   uint32_t sensor_id_from_monitor = little_endian_to_uint32(&mntr.m_buffer[2]);
   switch (type)
   {
