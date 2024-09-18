@@ -30,8 +30,8 @@ RAIL_Handle_t Initialize_RADIO(void)
   RAIL_Handle_t rail_handle = sl_rail_util_get_handle(SL_RAIL_UTIL_HANDLE_INST0);
   set_up_tx_fifo(rail_handle);
 
-  set_radio_to_idle_mode(rail_handle);    // set radio to idle mode
-  //radio_sleep_configuration(rail_handle); // radio sleep configuration
+//  set_radio_to_idle_mode(rail_handle);    // set radio to idle mode
+  radio_sleep_configuration(rail_handle); // radio sleep configuration
 
   //sl_sleeptimer_delay_millisecond(5);
   //set_radio_to_sleep_mode();
@@ -77,11 +77,29 @@ void set_radio_to_sleep_mode(void)
     }
 }
 
-void set_radio_to_idle_mode(RAIL_Handle_t rail_handle)
+void set_radio_to_wakeup_mode(void)
 {
-  // Make sure to disable all radio activities
-  RAIL_Idle(rail_handle, RAIL_IDLE, true);
+  // Go critical to assess sleep decisions
+  CORE_irqState_t irqState;
+  irqState = CORE_EnterCritical();
+
+  RAIL_Status_t status = RAIL_Wake(0);
+  if (status != RAIL_STATUS_NO_ERROR)
+    {
+      CORE_ExitCritical(irqState);
+      printf("Error: cannot set radio to sleep. Status: %d\n", status);
+    }
+  else
+    {
+      CORE_ExitCritical(irqState);  // Ensure to exit critical section if no error
+    }
 }
+
+//void set_radio_to_idle_mode(RAIL_Handle_t rail_handle)
+//{
+//  // Make sure to disable all radio activities
+//  RAIL_Idle(rail_handle, RAIL_IDLE, true);
+//}
 
 void set_radio_to_rx_mode(RAIL_Handle_t rail_handle)
 {

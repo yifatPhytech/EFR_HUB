@@ -395,14 +395,14 @@ typedef struct RAIL_PacketTimeStamp {
  * @brief The configuration
  */
 RAIL_ENUM(RAIL_SleepConfig_t) {
-  RAIL_SLEEP_CONFIG_TIMERSYNC_DISABLED, /**< Disable timer sync before and after sleep. */
-  RAIL_SLEEP_CONFIG_TIMERSYNC_ENABLED, /**< Enable timer sync before and after sleep. */
+  RAIL_SLEEP_CONFIG_ENUM_TIMERSYNC_DISABLED, /**< Disable timer sync before and after sleep. */
+  RAIL_SLEEP_CONFIG_ENUM_TIMERSYNC_ENABLED, /**< Enable timer sync before and after sleep. */
 };
 
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
 // Self-referencing defines minimize compiler complaints when using RAIL_ENUM
-#define RAIL_SLEEP_CONFIG_TIMERSYNC_DISABLED ((RAIL_SleepConfig_t) RAIL_SLEEP_CONFIG_TIMERSYNC_DISABLED)
-#define RAIL_SLEEP_CONFIG_TIMERSYNC_ENABLED  ((RAIL_SleepConfig_t) RAIL_SLEEP_CONFIG_TIMERSYNC_ENABLED)
+#define RAIL_SLEEP_CONFIG_TIMERSYNC_DISABLED ((RAIL_SleepConfig_t) RAIL_SLEEP_CONFIG_ENUM_TIMERSYNC_DISABLED)
+#define RAIL_SLEEP_CONFIG_TIMERSYNC_ENABLED  ((RAIL_SleepConfig_t) RAIL_SLEEP_CONFIG_ENUM_TIMERSYNC_ENABLED)
 #endif//DOXYGEN_SHOULD_SKIP_THIS
 
 /**

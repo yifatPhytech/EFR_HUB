@@ -1,3 +1,5 @@
+#include "em_emu.h"
+
 #include <libraries/106_ADC/106_adc_reader.h>
 #include <libraries/106_BlinkLED/106_BlinkLED.h>
 #include <libraries/106_ButtonHandler/106_ButtonHandler.h>
@@ -28,6 +30,7 @@
 #include "libraries/Hub_Definition/hub_protocols.h"
 #include "libraries/Hub_Definition/sensor_sm.h"
 #include "libraries/Hub_Definition/logger_sm.h"
+#include "libraries/tools/timers.h"
 
 
 #include "em_burtc.h"                                 // for BURTC_IRQHandler
@@ -35,7 +38,6 @@
 
 #define APP_RTC_TIMEOUT_MS (1000u / APP_RTC_FREQ_HZ)
 #define APP_RTC_TIMEOUT_1S (1000u)
-#define INSTALLATION_CYCLES   360 //((uint16_t)MAX_SLOT)  //20
 #define MAX_OPTIONAL_SLOT   20
 
 
@@ -56,6 +58,7 @@ static bool       g_bDataIn;
 volatile  uint16_t  g_nCurTimeSlot;
 static bool     g_bflagWakeup;
 static  uint8_t   g_nHubSlot;
+static  bool    g_bRadioStateOpen;
 
 //static int8_t     gReadStack = 0;
 static int8_t     gWriteStack = 0;
@@ -74,6 +77,8 @@ uint16_t  g_time2EndHubSlot;
 
 sl_sleeptimer_timer_handle_t rtc_tick_timer;
 sl_sleeptimer_timer_handle_t rtc10SecTimer;
+sl_sleeptimer_timer_handle_t rtcHubLgrTimer;
+
 uint32_t g_LoggerID = DEFAULT_ID;
 
 // NonBlockingDelay instances
@@ -121,7 +126,7 @@ static const char *GetTaskName(Task task)
 
 
 
-static void SetCurrentMode(WorkingMode newMode)
+void SetCurrentMode(WorkingMode newMode)
 {
 //  if (FOTA_HUB_CLIENT_IsPrepared() || FOTA_HUB_CLIENT_IsEnabled())
 //  {
@@ -182,6 +187,11 @@ bool SetHubSlot(uint8_t newSlot)
   return true;
 }
 
+void SetTicksCnt(uint16_t ticks)
+{
+  rtcTickCnt = ticks;
+}
+
 void InitVarsOnReset()
 {
   g_bOnReset = true;
@@ -196,7 +206,7 @@ void InitVarsOnReset()
   g_hours2NextInstl = 0;
   g_bSwapLgr = false;
   g_bHubRndSlot = false;
-
+  g_bRadioStateOpen = false;
 }
 
 void MoveData2Hstr()
@@ -218,45 +228,52 @@ void RTC_TimeSlot()   //10 sec timer
   g_bflagWakeup = true;
 }
 
+void RTC_HubSlotTimer()
+{
+  g_nCurTimeSlot = g_nHubSlot;
+  InitLoggerSM();
+}
+
 void WakeupRadio()
 {
-  init_tcxo();
+  if (g_bRadioStateOpen == true)
+     return;
+  printf("wakeup Radio");
+ init_tcxo();
 //  sl_stack_init();                                      // Initialize Silicon Labs RADIO components
-  rail_handle = Initialize_RADIO();                     // Initialize the radio
+//  rail_handle = Initialize_RADIO();                     // Initialize the radio
+  set_radio_to_wakeup_mode();
+  set_radio_to_rx_mode(rail_handle);
+  g_bRadioStateOpen = true;
 }
 
-void HandleTimeSlot()
+void PutRadio2Sleep()
 {
-
+  if (g_bRadioStateOpen == false)
+    return;
+  printf("PutRadio2Sleep");
+  set_radio_to_sleep_mode();
+  disable_tcxo();
+  g_bRadioStateOpen = false;
 }
 
-bool StartTickTimer()
-{
-  bool bTimerRun = false;
-  if (sl_sleeptimer_is_timer_running(&rtc_tick_timer, &bTimerRun) == SL_STATUS_OK)
-    {
-      if (!bTimerRun)
-        if (sl_sleeptimer_start_periodic_timer_ms(&rtc_tick_timer, 100, RTC_App_IRQHandler, NULL, 0, 0) != SL_STATUS_OK)
-          return false;
-    }
-  return true;
-}
 
-void StopTickTimer()
-{
-  bool bTimerRun = false;
-  if (sl_sleeptimer_is_timer_running(&rtc_tick_timer, &bTimerRun) == SL_STATUS_OK)
-    {
-      if (bTimerRun)
-        sl_sleeptimer_stop_timer(&rtc_tick_timer);
-
-    }
-}
+//bool StartTickTimer()
+//{
+//  bool bTimerRun = false;
+//  if (sl_sleeptimer_is_timer_running(&rtc_tick_timer, &bTimerRun) == SL_STATUS_OK)
+//    {
+//      if (!bTimerRun)
+//        if (sl_sleeptimer_start_periodic_timer_ms(&rtc_tick_timer, 100, RTC_App_IRQHandler, NULL, 0, 0) != SL_STATUS_OK)
+//          return false;
+//    }
+//  return true;
+//}
 
 void GoToSleep()
 {
   printf("GoToSleep");
-  StopTickTimer();
+  StopTimer(&rtc_tick_timer);
   ResetAll();
 //  if (RTCDRV_IsRunning(rtc10SecTimer, &bTimerRun) == ECODE_EMDRV_RTCDRV_OK) //todo add
 //    if (bTimerRun == false)
@@ -269,12 +286,18 @@ void GoToSleep()
 //  RTCDRV_Delay(5);  //50
 
   BlinkLED_offLED0();
-  disable_tcxo(); //PutRadio2Sleep();
+  PutRadio2Sleep();
   g_bflagWakeup = false;
   while (g_bflagWakeup == false)
     EMU_EnterEM2(true);
 }
 
+bool CanEnterSleep()
+{
+  if ((IsSnsSmSleep()) && (IsLgrSmSleep()))
+      return true;
+  return false;
+}
 
 /*void GetNextTask()
 {
@@ -401,39 +424,24 @@ void GoToSleep()
 */
 void Set10SecTimer()
 {
-  if (sl_sleeptimer_start_periodic_timer_ms(&rtc10SecTimer, APP_RTC_TIMEOUT_1S * SLOT_INTERVAL_SEC, RTC_TimeSlot, NULL, 0, 0) != SL_STATUS_OK)
+  SetTimer(&rtc10SecTimer, APP_RTC_TIMEOUT_1S * SLOT_INTERVAL_SEC, RTC_TimeSlot);
 
-      printf("failed to set slots timer");
 }
-
-void SyncClock()
+void Stop10SecTimer()
 {
-  if ((g_nSec % SLOT_INTERVAL_SEC) == 0)
-  {
-    g_nCurTimeSlot = (g_nMin * 60 + g_nSec) / SLOT_INTERVAL_SEC;//170;//
-    if (g_nCurTimeSlot >= 360)
-      g_nCurTimeSlot = 0;
-    printf("synchronize! slot is: %d", g_nCurTimeSlot);
-    // start 10 sec timer
-    Set10SecTimer();
-//    if (ECODE_EMDRV_RTCDRV_OK
-//        != RTCDRV_StartTimer(rtc10SecTimer, rtcdrvTimerTypePeriodic, APP_RTC_TIMEOUT_1S * SLOT_INTERVAL_SEC,
-//                   (RTCDRV_Callback_t)RTC_TimeSlot, NULL) )
-//      {
-//        printf("failed to set slots timer");
-//      }
-    printf("start installation hour");
-    SetCurrentMode(MODE_INSTALLATION);  // g_wCurMode = ;
-    rtcTickCnt = SLOT_INTERVAL_SEC * APP_RTC_FREQ_HZ;
-    g_instlCycleCnt = INSTALLATION_CYCLES;// should be: MAX_SLOT. for whole hour.
-    g_hours2NextInstl = 6;
-    g_bSendParams = true;
-    g_nIndex2SendPrm = 0;
-  }
+  StopTimer(&rtc10SecTimer);
+
+}
+uint32_t CalcTimeToHubSlot()
+{
+  return (g_nHubSlot - g_nCurTimeSlot) * 10;
 }
 
-
-void TaskManager()
+void SetTimer4Logger()
+{
+  SetTimer(&rtcHubLgrTimer, APP_RTC_TIMEOUT_1S * CalcTimeToHubSlot(), RTC_HubSlotTimer);
+}
+/*void TaskManager()
 {
   if (g_bflagWakeup == true)
   {
@@ -533,8 +541,8 @@ void TaskManager()
      default:
        printf("dont know what to do");
        break;
-     } // SWITCH */
-}
+     } // SWITCH
+}*/
 
 
 int main(void)
@@ -581,7 +589,7 @@ int main(void)
   ABP2_Init();                                  // Initialize ABP2 (Pressure I2C sensor)
   UARTComm_init(false);                         // Initialize UART communication
   printf("\n\nWake Up!\r\n");                   // Send wake-up message
-  StartTickTimer();
+  SetTimer(&rtc_tick_timer, 100, RTC_App_IRQHandler);
   if (ALLOW_SLEEP) SMTM_Init();                 // Initialize sleep manager if allowed
 
   // NonBlockingDelay_Init
@@ -602,20 +610,25 @@ int main(void)
   while (1)
     {
       sl_system_process_action();               // Process Silicon Labs actions
-
+      if (g_bflagWakeup)
+        {
+          SetTimer(&rtc_tick_timer, 100, RTC_App_IRQHandler);
+        }
       switch (getSystemMode())
       {
         case ACTIVE_MODE:
           {
             if (ALLOW_BLINK && (NonBlockingDelay_check(&led_interval_instance))) BlinkLED_toggleLED0();  // Toggle LED if delay met
             Read_ON_OFF_Button();
-            TaskManager();
+//            TaskManager();
 //            rf_state_machine(rail_handle);    // Process RF state machine
             app_process_action(rail_handle);  // Process radio app actions
             SensorStateMachine();
             LoggerStateMachine();
             UARTComm_process_action();        // Process UART actions
-            if (ALLOW_SLEEP && (SLEEP_IMMEDIATELY == true || NonBlockingDelay_check(&sleepInstance))) SMTM_EnterDeepSleep();  // Sleep if conditions met
+            if (CanEnterSleep())
+              GoToSleep();
+//            if (ALLOW_SLEEP && (SLEEP_IMMEDIATELY == true || NonBlockingDelay_check(&sleepInstance))) SMTM_EnterDeepSleep();  // Sleep if conditions met
           }
           break;
 

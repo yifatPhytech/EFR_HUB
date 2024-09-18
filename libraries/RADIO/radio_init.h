@@ -18,5 +18,6 @@ void radio_sleep_configuration(RAIL_Handle_t railHandle);
 void set_radio_to_sleep_mode(void);
 void set_radio_to_idle_mode(RAIL_Handle_t rail_handle);
 void set_radio_to_rx_mode(RAIL_Handle_t rail_handle);
+void set_radio_to_wakeup_mode(void);
 
 #endif  // LIBRARIES_RADIO_RADIO_INIT_H

@@ -21,6 +21,7 @@
 #include "libraries/phytech_protocol/phytech_protocol.h"
 #include "libraries/Hub_Definition/hub_protocols.h"
 #include "libraries/NonBlockingDelay/NonBlockingDelay.h"
+#include "libraries/Hub_Definition/sensor_sm.h"
 
 //#define POWER_OUT_1   0 //1 //  -10dbm
 //#define POWER_OUT_4   1 //4 //  0dbm
@@ -28,12 +29,15 @@
 //#define POWER_OUT_127 3 //127 //  20dbm
 
 #define FAIL_BEFORE_BC      3
+#define INSTALLATION_CYCLES   360 //((uint16_t)MAX_SLOT)  //20
+
 // Define states
 typedef enum {
     LOGGER_STATE_SLEEP,
     LOGGER_STATE_INIT,
     LOGGER_STATE_SEND_MEASUREMENTS,
     LOGGER_STATE_WAIT_FOR_LOGGER_ACK,
+    LOGGER_STATE_SYNC,
     LOGGER_STATE_ERROR_HANDLING
 } LoggerState;
 
@@ -102,7 +106,7 @@ SendMsgType GetCurrentMsgType()
   return g_msgType ;
 }
 
-void StartHubSlot()
+void InitLoggerSM()
 {
 //  g_wCurMode = MODE_SENDING;
 //  g_nCurTask = TASK_BUILD_MSG;
@@ -114,6 +118,7 @@ void StartHubSlot()
 //    g_curLgrRfPwr = POWER_OUT_4;
   SetNewRfPower(g_curLgrRfPwr);
   g_time2EndHubSlot = SLOT_INTERVAL_SEC * APP_RTC_FREQ_HZ;
+  currentState = LOGGER_STATE_INIT;
 }
 
 void DefineRadio_PWR_LVL2LGR(uint8_t rssi)
@@ -197,7 +202,13 @@ LoggerState GetNextMission(bool bPrevMissionOK, bool bTimeout)
       }
       else
         if (g_msgType == MSG_HUB_PRM)
+          {
           SetCurrentMsgType( MSG_NONE);
+          if (g_bOnReset)
+            {
+              return LOGGER_STATE_SYNC;
+            }
+          }
 //      else
 //        g_wCurMode = MODE_SLEEPING;
   return LOGGER_STATE_SLEEP;
@@ -229,6 +240,22 @@ void handleError()
     printf("Handling error...\n");
 }
 
+bool SyncClock()
+{
+  if ((g_nSec % SLOT_INTERVAL_SEC) == 0)
+  {
+    g_nCurTimeSlot = (g_nMin * 60 + g_nSec) / SLOT_INTERVAL_SEC;//170;//
+    if (g_nCurTimeSlot >= 360)
+      g_nCurTimeSlot = 0;
+    printf("synchronize! slot is: %d\nstart installation hour", g_nCurTimeSlot);
+    g_instlCycleCnt = INSTALLATION_CYCLES;// should be: MAX_SLOT. for whole hour.
+    g_hours2NextInstl = 6;
+    g_bSendParams = true;
+    g_nIndex2SendPrm = 0;
+    return true;
+  }
+  return false;
+}
 // State machine logic
 void LoggerStateMachine()
 {
@@ -245,7 +272,7 @@ void LoggerStateMachine()
             break;
 
         case LOGGER_STATE_INIT:
-          StartHubSlot();
+//          InitLoggerSM();
           currentState = LOGGER_STATE_SEND_MEASUREMENTS;
           break;
         case LOGGER_STATE_SEND_MEASUREMENTS:
@@ -273,6 +300,15 @@ void LoggerStateMachine()
             currentState = LOGGER_STATE_SLEEP;
             break;
 
+        case LOGGER_STATE_SYNC:
+          if (SyncClock())
+            {
+              SetCurrentMode(MODE_INSTALLATION);
+              InitSensorSM();
+              currentState = LOGGER_STATE_SLEEP;
+            }
+          break;
+
         default:
             // Unexpected state
             printf("Unexpected state!\n");
@@ -282,3 +318,7 @@ void LoggerStateMachine()
       printf("set next logger state to %s" , GetLoggerStateName(currentState));
 }
 
+bool IsLgrSmSleep()
+{
+  return currentState == LOGGER_STATE_SLEEP;
+}

@@ -19,12 +19,14 @@
 #include "libraries/Hub_Definition/sensor_sm.h"
 #include "libraries/Hub_Definition/hub_protocols.h"
 #include "libraries/Hub_Definition/rf_rx_handle.h"
+#include "libraries/tools/timers.h"
 
 
 
 // Define states
 typedef enum {
     SENSOR_STATE_SLEEP,
+    SENSOR_STATE_NEW_SLOT,
     SENSOR_STATE_LISTEN,
     SENSOR_STATE_RECEIVE_MEASUREMENT,
     SENSOR_STATE_SEND_ACK,
@@ -34,7 +36,8 @@ typedef enum {
 // Define global variables
 SensorState currentSnsState = SENSOR_STATE_SLEEP;
 bool measurementReceived = false;
-bool loggerAckReceived = false;
+//bool loggerAckReceived = false;
+//sl_sleeptimer_timer_handle_t rtc10SecTimer;
 
 bool IsBusySlotOrNeighbor(uint16_t slot, bool bCheckNeighbor)
 {
@@ -75,6 +78,9 @@ bool ShouldListen()
 {
   uint8_t i = 0, slotOfSns = 0;
   g_CurSensorLsn = 0;
+
+  if (g_instlCycleCnt > 0)
+    return true;
 
   if ((IsBusySlotOrNeighbor(g_nCurTimeSlot, true)) || (IsBusySlotOrNeighbor(g_nCurTimeSlot+g_nDeltaOfSlots, false)))  //((g_nDeltaOfSlots != 0) && (IsBusySlot(g_nCurTimeSlot+g_nDeltaOfSlots))))
     do
@@ -138,10 +144,11 @@ void DefineEzradio_PWR_LVL(uint8_t rssi)
       else
         rfPwr = POWER_OUT_3;
 
-  printf("according to RSSI %d set RF power to: %d", rssi, rfPwr);
+//  printf("according to RSSI %d set RF power to: %d", rssi, rfPwr);
   SetNewRfPower(rfPwr);
 //  ezr32hg_SetPA_PWR_LVL(rfPwr);
 }
+
 void sendMeasurementAck() {
     // Simulate sending an ACK to the sensor
     printf("Measurement ACK sent.\n");
@@ -155,6 +162,15 @@ void handleSnsError()
     printf("Handling error...\n");
 }
 
+void InitSensorSM()
+{
+  currentSnsState = SENSOR_STATE_LISTEN;
+  Set10SecTimer();
+  printf("start sensors sm");
+//    SetCurrentMode(MODE_INSTALLATION);  // g_wCurMode = ;
+  SetTicksCnt( SLOT_INTERVAL_SEC * APP_RTC_FREQ_HZ);
+}
+
 // State machine logic
 void SensorStateMachine()
 {
@@ -162,13 +178,37 @@ void SensorStateMachine()
     {
         case SENSOR_STATE_SLEEP:
             // Simulate waiting for the new hour or period
-            printf("HUB is sleeping.\n");
-            GoToSleep();
+            printf("sensor sm sleeping.\n");
+ //           GoToSleep();
             // Transition to Listen state
+            break;
+        case SENSOR_STATE_NEW_SLOT:
+          if  (GetCurrentMode() == MODE_INSTALLATION)
+              if (g_instlCycleCnt > 1)
+              {
+                g_instlCycleCnt--;
+              }
+              else
+                {
+                  if (g_nCurTimeSlot >= 60)
+                    {
+                      Stop10SecTimer();
+                      SetTimer4Logger();
+                      currentSnsState = SENSOR_STATE_SLEEP;
+                    }
+                }
             if (ShouldListen())
               currentSnsState = SENSOR_STATE_LISTEN;
-            break;
-
+            else
+              {
+              if  (GetCurrentMode() == MODE_INSTALLATION)
+                {
+                  g_bOnReset = false;
+                  InitLoggerSM();
+                }
+              currentSnsState = SENSOR_STATE_SLEEP;
+              }
+          break;
         case SENSOR_STATE_LISTEN:
 //            listenForSensors();
             // Transition to Receive Measurement state if a measurement is received
@@ -214,6 +254,11 @@ void SensorStateMachine()
             printf("Unexpected state!\n");
             break;
     }
+}
+
+bool IsSnsSmSleep()
+{
+  return currentSnsState == SENSOR_STATE_SLEEP;
 }
 
 //int main() {

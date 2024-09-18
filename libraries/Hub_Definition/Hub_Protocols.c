@@ -152,9 +152,6 @@ uint8_t BuildDataMsg()
 {
   uint8_t bufIndex = 0, senIndex = 0 , i =0;
   g_bIsMoreData = false;
-#ifdef DEBUG_MODE
-  printf("BuildDataMsg. g_LoggerID= %d current slot = %d", g_LoggerID, g_nCurTimeSlot);
-#endif
 
   msgOut.Header.m_Header = HEADER_SND_DATA;
 //  if (g_bAlert2Send == true)

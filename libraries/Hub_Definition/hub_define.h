@@ -11,8 +11,9 @@
 #define DEFAULT_ID  0xFFFFFFFF
 #define MAX_SENSOR_SLOT     60
 #define SLOT_INTERVAL_SEC   10
+#define APP_RTC_TIMEOUT_1S (1000u)
 
-#define MAX_HSTR_CNT  5
+#define MAX_HSTR_CNT  12  //5
 #define MAX_SLOT  360
 #define CELL_EMPTY  0
 #define CELL_BUSY 1
@@ -120,7 +121,10 @@ uint8_t GetCheckSum(uint8_t* buf, uint8_t len);
 WorkingMode GetCurrentMode( );
 bool SetHubSlot(uint8_t newSlot);
 void Set10SecTimer();
+void Stop10SecTimer();
 void GoToSleep();
+void SetCurrentMode(WorkingMode newMode);
+void SetTicksCnt(uint16_t ticks);
 
 
 extern uint32_t g_LoggerID;
@@ -140,9 +144,5 @@ extern uint16_t g_time2EndHubSlot;
 extern volatile uint8_t    g_nMin;
 extern volatile uint8_t    g_nSec;
 extern bool       g_bIsFirstRound;
-
-
-
-
 
 

@@ -20,7 +20,7 @@
 #if defined(SL_CATALOG_APP_LOG_PRESENT)
 #include "app_log.h"
 #endif
-#include "rail_types.h"
+//#include "rail_types.h"
 #include "rail.h"
 #include "cmsis_compiler.h"
 #if defined(SL_CATALOG_KERNEL_PRESENT)
@@ -108,6 +108,7 @@ void ChangeRfPower(RAIL_Handle_t rail_handle, rf_power pwr)
     return;
   g_curRfPwr = pwr;
   RAIL_ConfigTxPower(rail_handle, tx_power_dbm[(uint8_t)pwr]);
+  printf("set RF power to %d", g_curRfPwr);
 }
 
 /******************************************************************************
