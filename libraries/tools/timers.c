@@ -13,7 +13,7 @@ void SetTimer(sl_sleeptimer_timer_handle_t* timer, uint32_t timeout, void *callb
 {
   if (sl_sleeptimer_start_periodic_timer_ms(timer, timeout, callback_data, NULL, 0, 0) != SL_STATUS_OK)
 
-      printf("failed to set slots timer");
+      printf("failed to set timer\n");
 }
 
 void StopTimer(sl_sleeptimer_timer_handle_t* timer)

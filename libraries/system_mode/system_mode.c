@@ -24,7 +24,7 @@ sensorInfo_t sensorDetails;
 void setSystemMode(system_mode_t mode)
 {
   currentSystemMode = mode;
-  printf("System Mode set to: %s\n", getSystemModeName(currentSystemMode));
+  printf("\r\nSystem Mode set to: %s\n", getSystemModeName(currentSystemMode));
 }
 
 system_mode_t getSystemMode(void)
@@ -51,7 +51,7 @@ bool initialize_sensor_details(void)
 //  sensorDetails.loggerID = readFlash_uint32(LOGGER_ID_FLASH_PAGE_ADDRESS); // Assuming a similar function exists for reading loggerID
 
   // Read sensorType from flash and store in sensorDetails
-  sensorDetails.sensorType = readFlash_uint8(SENSOR_TYPE_FLASH_PAGE_ADDRESS);
+//  sensorDetails.sensorType = readFlash_uint8(SENSOR_TYPE_FLASH_PAGE_ADDRESS);
 
   // Hardcode the firmware version details into sensorDetails
   sensorDetails.fwVersionType = 'h'; // Replace with actual value
@@ -62,7 +62,7 @@ bool initialize_sensor_details(void)
   // Validate sensor and logger details
   if (sensorDetails.sensorID < 1000000 || sensorDetails.sensorID > 50000000)
     {
-      printf("Invalid sensorID: %lu\n", sensorDetails.sensorID);
+      printf("\r\nInvalid sensorID: %lu\n", sensorDetails.sensorID);
       return false;
     }
 
@@ -70,16 +70,16 @@ bool initialize_sensor_details(void)
   // reset it to 0xFFFFFFFF and save the updated value to flash.
 //  if (sensorDetails.loggerID != 4294967295 && (sensorDetails.loggerID < 1000000 || sensorDetails.loggerID > 9999999))
 //    {
-//      printf("Invalid loggerID: %lu\n setting loggerID to 0xFFFFFFFF", sensorDetails.loggerID);
+//      printf("\r\nInvalid loggerID: %lu\n setting loggerID to 0xFFFFFFFF", sensorDetails.loggerID);
 //      sensorDetails.loggerID = 4294967295; // 0xFFFFFFFF
 //      writeFlash_uint32(LOGGER_ID_FLASH_PAGE_ADDRESS, sensorDetails.loggerID);       // Update loggerID in flash
 //    }
 
-  if (sensorDetails.sensorType == 0 || sensorDetails.sensorType >= 255)
-    {
-      printf("Invalid sensorType: %u\n", sensorDetails.sensorType);
-      return false;
-    }
+//  if (sensorDetails.sensorType == 0 || sensorDetails.sensorType >= 255)
+//    {
+//      printf("\r\nInvalid sensorType: %u\n", sensorDetails.sensorType);
+//      return false;
+//    }
 
   // No validation needed for firmware version
 
@@ -89,17 +89,17 @@ bool initialize_sensor_details(void)
 void print_sensor_details(void)
 {
   // Print the sensor details
-  printf("Sensor ID: %lu\n", sensorDetails.sensorID);
-//  printf("Logger ID: %lu\n", sensorDetails.loggerID); // Printing the logger ID
-  printf("Sensor Type: %u\n", sensorDetails.sensorType);
+  printf("\r\nSensor ID: %lu\n", sensorDetails.sensorID);
+//  printf("\r\nLogger ID: %lu\n", sensorDetails.loggerID); // Printing the logger ID
+  printf("\r\nSensor Type: %u\n", sensorDetails.sensorType);
 
   // Print the firmware version
-  printf("Firmware Version Type: %c\n", sensorDetails.fwVersionType);
-  printf("Firmware Version Month: %u\n", sensorDetails.fwVersionMonth);
-  printf("Firmware Version Year: %u\n", sensorDetails.fwVersionYear);
-  printf("Firmware Version Index: %u\n", sensorDetails.fwVersionIndex);
+  printf("\r\nFirmware Version Type: %c\n", sensorDetails.fwVersionType);
+  printf("\r\nFirmware Version Month: %u\n", sensorDetails.fwVersionMonth);
+  printf("\r\nFirmware Version Year: %u\n", sensorDetails.fwVersionYear);
+  printf("\r\nFirmware Version Index: %u\n", sensorDetails.fwVersionIndex);
 
-  printf("\n");
+  printf("\r\n\n");
 }
 
 bool handleOperationBySensorType(uint8_t sensorType)

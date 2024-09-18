@@ -38,11 +38,11 @@ void set_rf_state(RFState new_state)
   current_state = new_state;
   switch (current_state)
   {
-    case IDLE_MODE:      printf("New State: IDLE_MODE\n");       break;
-    case SEND_MESSAGE:   printf("New State: SEND_MESSAGE\n");    break;
-    case WAIT_FOR_ACK:   printf("New State: WAIT_FOR_ACK\n");    break;
-    case SLEEP_IMEDITLY: printf("New State: SLEEP_IMEDITLY\n");  break;
-    default:             printf("Unknown state\n");              break;
+    case IDLE_MODE:      printf("\r\nNew State: IDLE_MODE\n");       break;
+    case SEND_MESSAGE:   printf("\r\nNew State: SEND_MESSAGE\n");    break;
+    case WAIT_FOR_ACK:   printf("\r\nNew State: WAIT_FOR_ACK\n");    break;
+    case SLEEP_IMEDITLY: printf("\r\nNew State: SLEEP_IMEDITLY\n");  break;
+    default:             printf("\r\nUnknown state\n");              break;
   }
 }
 
@@ -103,7 +103,7 @@ void rf_state_machine(RAIL_Handle_t rail_handle)
           failed_ack_counter++;  // Increment the failed ACK counter
           if (failed_ack_counter > 3)
             {
-              printf("I failed to receive ACK message/n");
+              printf("\r\nI failed to receive ACK message/n");
               is_hourly_message = false;
               is_explosive_message = false;
               set_rf_state(SLEEP_IMEDITLY);  // Go to SLEEP_IMEDITLY state after 3 failed ACKs

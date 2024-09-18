@@ -4,6 +4,8 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#define DebugMode
+
 #define APP_RTC_FREQ_HZ 10u
 #define MAX_SEND_RETRY    4
 #define MAX_EZR_BUFFER_SIZE 64
@@ -125,6 +127,7 @@ void Stop10SecTimer();
 void GoToSleep();
 void SetCurrentMode(WorkingMode newMode);
 void SetTicksCnt(uint16_t ticks);
+void RadioOn();
 
 
 extern uint32_t g_LoggerID;

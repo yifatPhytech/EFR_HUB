@@ -38,7 +38,8 @@ typedef enum {
     LOGGER_STATE_SEND_MEASUREMENTS,
     LOGGER_STATE_WAIT_FOR_LOGGER_ACK,
     LOGGER_STATE_SYNC,
-    LOGGER_STATE_ERROR_HANDLING
+    LOGGER_STATE_ERROR_HANDLING,
+    LOGGER_STATE_DEINIT
 } LoggerState;
 
 // Define global variables
@@ -50,6 +51,9 @@ static rf_power   g_curLgrRfPwr;
 static uint16_t   g_time2StartSend;
 static uint8_t    g_nRfFail_cnt = 0;
 NonBlockingDelay ACK_timer_instance;               // NonBlockingDelay instance for LED toggle
+#ifdef DebugMode
+uint8_t printX = 0;
+#endif
 
 static const char *GetLoggerStateName(LoggerState state)
 {
@@ -58,8 +62,9 @@ static const char *GetLoggerStateName(LoggerState state)
     [LOGGER_STATE_INIT] = "LOGGER_STATE_INIT",
     [LOGGER_STATE_SEND_MEASUREMENTS] = "LOGGER_STATE_SEND_MEASUREMENTS",
     [LOGGER_STATE_WAIT_FOR_LOGGER_ACK] = "LOGGER_STATE_WAIT_FOR_LOGGER_ACK",
+    [LOGGER_STATE_SYNC] = "LOGGER_STATE_SYNC",
     [LOGGER_STATE_ERROR_HANDLING] = "LOGGER_STATE_ERROR_HANDLING",
-
+    [LOGGER_STATE_DEINIT] = "LOGGER_STATE_DEINIT",
   };
 
   return loggerStateNames[state];
@@ -97,7 +102,7 @@ static void SetCurrentMsgType(SendMsgType newMsgType)
     return;
   }
 
-  printf("msgType %s (prev %s)", GetMessageTypeName(newMsgType), GetMessageTypeName(g_msgType));
+  printf("\r\nmsgType %s (prev %s)", GetMessageTypeName(newMsgType), GetMessageTypeName(g_msgType));
   g_msgType = newMsgType;
 }
 
@@ -111,14 +116,17 @@ void InitLoggerSM()
 //  g_wCurMode = MODE_SENDING;
 //  g_nCurTask = TASK_BUILD_MSG;
   g_msgType = MSG_DATA;
+  Set10SecTimer();
   g_nRetryCnt = 0;
 //  g_nMaxRetryCnt = 0;
   g_bIsFirstRound = true;
+  RadioOn();
 //  if (g_nRfFail_cnt > 0)  //todo
 //    g_curLgrRfPwr = POWER_OUT_4;
   SetNewRfPower(g_curLgrRfPwr);
   g_time2EndHubSlot = SLOT_INTERVAL_SEC * APP_RTC_FREQ_HZ;
   currentState = LOGGER_STATE_INIT;
+  NonBlockingDelay_Init(&ACK_timer_instance, 500);           // Initialize LED toggle delay
 }
 
 void DefineRadio_PWR_LVL2LGR(uint8_t rssi)
@@ -130,48 +138,13 @@ void DefineRadio_PWR_LVL2LGR(uint8_t rssi)
     if ((rssi < 70) && (g_curLgrRfPwr < POWER_OUT_3))
       g_curLgrRfPwr++;
 
-  printf("rssi %d, cur rf power: %d next: %d", rssi, requiredPwr, g_curLgrRfPwr);
+  printf("\r\nrssi %d, cur rf power: %d next: %d", rssi, requiredPwr, g_curLgrRfPwr);
   SetNewRfPower(g_curLgrRfPwr);
 }
 
-LoggerState GetNextMission(bool bPrevMissionOK, bool bTimeout)
+LoggerState GetNextMission(bool bPrevMissionOK)
 {
-  rf_power new_pwr;
-  if (bTimeout)
-    {
-      if (g_msgType == MSG_CONFIG)
-        {
-          if (myData.m_ID > 0)
-          {
-            BlinkLED_offLED0();
-//                RTCDRV_Delay(5000);
-          }
-          return LOGGER_STATE_SLEEP;
-        }
-      if (g_nRetryCnt < MAX_SEND_RETRY)
-        {
-          g_time2StartSend = (sensorDetails.sensorID % 100)/ 2;
-          if (g_nRetryCnt == 1)
-            new_pwr = POWER_OUT_2;
-          if (g_nRetryCnt > 1)
-            new_pwr = POWER_OUT_3;
-          SetNewRfPower(new_pwr);
-//          ezr32hg_SetPA_PWR_LVL(g_curLgrRfPwr);
-          return LOGGER_STATE_SEND_MEASUREMENTS;
-        }
-      else
-        {
-          g_nRfFail_cnt++;
-//          if (g_wCurMode == MODE_SLEEPING)
-            if (g_nRfFail_cnt >= FAIL_BEFORE_BC)
-            {
-              g_nRfFail_cnt = 0;
-              g_LoggerID = DEFAULT_ID;
-            }
-
-        }
-    } //if (bTimeout)
-//  g_nRetryCnt = 0;
+  g_nRetryCnt = 0;
   // if more data - do another sending task
   if ((g_bIsMoreData) && (bPrevMissionOK == true))
   {
@@ -187,7 +160,7 @@ LoggerState GetNextMission(bool bPrevMissionOK, bool bTimeout)
         if (g_bSendParams == true)
           SetCurrentMsgType( MSG_SNS_PRM);
         else
-          g_msgType = MSG_HUB_PRM;
+          SetCurrentMsgType(MSG_HUB_PRM);
         return LOGGER_STATE_SEND_MEASUREMENTS;
 
     }
@@ -195,7 +168,7 @@ LoggerState GetNextMission(bool bPrevMissionOK, bool bTimeout)
       if (g_msgType == MSG_SNS_PRM) //&& (g_bSendParams == true))
       {
         {
-          g_msgType = MSG_HUB_PRM;
+          SetCurrentMsgType(MSG_HUB_PRM);
           return LOGGER_STATE_SEND_MEASUREMENTS;
 //          g_nCurTask = TASK_BUILD_MSG;
         }
@@ -216,28 +189,79 @@ LoggerState GetNextMission(bool bPrevMissionOK, bool bTimeout)
 
 void sendMeasurementsToLogger()
 {
-    // Simulate sending measurements to the logger
-    printf("Sending measurements to logger...\n");
-    loggerAckReceived = false;
-    BuildTx();
-    BufferEnvelopeTransmit();
-    NonBlockingDelay_Init(&ACK_timer_instance, 500);           // Initialize LED toggle delay
+  g_nRetryCnt++;
+  // Simulate sending measurements to the logger
+  printf("Sending measurements to logger %d time...\n", g_nRetryCnt);
+  NonBlockingDelay_reset(&ACK_timer_instance);
+  loggerAckReceived = false;
+  BuildTx();
+  BufferEnvelopeTransmit();
+#ifdef DebugMode
+ printX = 0;
+#endif
+
 }
 
 void waitForLoggerAck()
 {
+#ifdef DebugMode
+if ( printX == 0)
+  {
+  printf("Waiting for logger ACK...\n");
+  printX = 1;
+  }
+#endif
+
     // Simulate waiting for logger ACK
-    printf("Waiting for logger ACK...\n");
     if (IsNewRxData())
      loggerAckReceived = true; // Simulate receiving ACK
 //       currentSnsState = SENSOR_STATE_RECEIVE_MEASUREMENT;
 
 }
 
-void handleError()
+LoggerState handleError()
 {
-    // Simulate error handling
+  rf_power new_pwr;
+
+  // Simulate error handling
     printf("Handling error...\n");
+    if (g_msgType == MSG_CONFIG)
+      {
+        if (sensorDetails.sensorID == 0)
+        {
+          BlinkLED_offLED0();
+//                RTCDRV_Delay(5000);
+        }
+        SetCurrentMode(MODE_SLEEPING);
+        return LOGGER_STATE_SLEEP;
+      }
+      if (g_nRetryCnt < MAX_SEND_RETRY)
+        {
+          g_time2StartSend = (sensorDetails.sensorID % 100)/ 2;
+          if (g_nRetryCnt == 1)
+            new_pwr = POWER_OUT_2;
+          if (g_nRetryCnt > 1)
+            new_pwr = POWER_OUT_3;
+          SetNewRfPower(new_pwr);
+//          ezr32hg_SetPA_PWR_LVL(g_curLgrRfPwr);
+          return LOGGER_STATE_SEND_MEASUREMENTS;
+        }
+      else
+        {
+          if (g_bOnReset)
+          {
+            SetCurrentMode(MODE_SLEEPING);
+            return LOGGER_STATE_SLEEP;
+          }
+          g_nRfFail_cnt++;
+//          if (g_wCurMode == MODE_SLEEPING)
+            if (g_nRfFail_cnt >= FAIL_BEFORE_BC)
+            {
+              g_nRfFail_cnt = 0;
+              g_LoggerID = DEFAULT_ID;
+            }
+            return GetNextMission(false);
+        }
 }
 
 bool SyncClock()
@@ -247,7 +271,7 @@ bool SyncClock()
     g_nCurTimeSlot = (g_nMin * 60 + g_nSec) / SLOT_INTERVAL_SEC;//170;//
     if (g_nCurTimeSlot >= 360)
       g_nCurTimeSlot = 0;
-    printf("synchronize! slot is: %d\nstart installation hour", g_nCurTimeSlot);
+    printf("\r\nsynchronize! slot is: %d\nstart installation hour", g_nCurTimeSlot);
     g_instlCycleCnt = INSTALLATION_CYCLES;// should be: MAX_SLOT. for whole hour.
     g_hours2NextInstl = 6;
     g_bSendParams = true;
@@ -265,7 +289,7 @@ void LoggerStateMachine()
     {
         case LOGGER_STATE_SLEEP:
             // Simulate waiting for the new hour or period
-            printf("HUB is sleeping.\n");
+//            printf("HUB is sleeping.\n");
 //            sleep(1); // Replace with actual time handling
             // Transition to Listen state
 //            currentState = LOGGER_STATE_LISTEN;
@@ -286,18 +310,18 @@ void LoggerStateMachine()
             if (loggerAckReceived)
               {
                 bRes = ParseLoggerMsg();
-                // Transition back to Sleep state after receiving ACK
+                currentState = GetNextMission(bRes);
             }
             else
-              bTimeout = NonBlockingDelay_check(&ACK_timer_instance);
-            if ((loggerAckReceived) || (bTimeout == true))
-              currentState = GetNextMission(bRes, bTimeout);
+              {
+                bTimeout = NonBlockingDelay_check(&ACK_timer_instance);
+                if (bTimeout)
+                   currentState = LOGGER_STATE_ERROR_HANDLING;
+              }
             break;
 
         case LOGGER_STATE_ERROR_HANDLING:
-            handleError();
-            // Transition back to Sleep state after handling error
-            currentState = LOGGER_STATE_SLEEP;
+            currentState = handleError();
             break;
 
         case LOGGER_STATE_SYNC:
@@ -309,16 +333,22 @@ void LoggerStateMachine()
             }
           break;
 
+        case LOGGER_STATE_DEINIT:
+          Stop10SecTimer();
+          SetTimer4Sensors();
+          currentState = LOGGER_STATE_SLEEP;
+          break;
+
         default:
             // Unexpected state
-            printf("Unexpected state!\n");
+            printf("\r\nUnexpected state!\n");
             break;
     }
     if (currentState != prevState)
-      printf("set next logger state to %s" , GetLoggerStateName(currentState));
+      printf("set next logger state to %s\n" , GetLoggerStateName(currentState));
 }
 
 bool IsLgrSmSleep()
 {
-  return currentState == LOGGER_STATE_SLEEP;
+  return (currentState == LOGGER_STATE_SLEEP);
 }

@@ -38,6 +38,9 @@ SensorState currentSnsState = SENSOR_STATE_SLEEP;
 bool measurementReceived = false;
 //bool loggerAckReceived = false;
 //sl_sleeptimer_timer_handle_t rtc10SecTimer;
+#ifdef DebugMode
+uint8_t printY = 0;
+#endif
 
 bool IsBusySlotOrNeighbor(uint16_t slot, bool bCheckNeighbor)
 {
@@ -99,7 +102,7 @@ bool ShouldListen()
           }
           else
           {
-            printf("no need to listen to sensor %lu this hour", MySensorsArr[i].ID);
+            printf("\r\nno need to listen to sensor %lu this hour", MySensorsArr[i].ID);
             return false;
           }
         }
@@ -127,7 +130,7 @@ bool ShouldListen()
 // Dummy functions to simulate sensor and logger interactions
 //void listenForSensors() {
 //    // Simulate listening for sensors
-//    printf("Listening for sensors...\n");
+//    printf("\r\nListening for sensors...\n");
 //}
 
 void DefineEzradio_PWR_LVL(uint8_t rssi)
@@ -144,7 +147,7 @@ void DefineEzradio_PWR_LVL(uint8_t rssi)
       else
         rfPwr = POWER_OUT_3;
 
-//  printf("according to RSSI %d set RF power to: %d", rssi, rfPwr);
+//  printf("\r\naccording to RSSI %d set RF power to: %d", rssi, rfPwr);
   SetNewRfPower(rfPwr);
 //  ezr32hg_SetPA_PWR_LVL(rfPwr);
 }
@@ -159,16 +162,19 @@ void sendMeasurementAck() {
 void handleSnsError()
 {
     // Simulate error handling
-    printf("Handling error...\n");
+    printf("\r\nHandling error...\n");
 }
 
 void InitSensorSM()
 {
   currentSnsState = SENSOR_STATE_LISTEN;
   Set10SecTimer();
-  printf("start sensors sm");
+  printf("start sensors sm\n");
 //    SetCurrentMode(MODE_INSTALLATION);  // g_wCurMode = ;
   SetTicksCnt( SLOT_INTERVAL_SEC * APP_RTC_FREQ_HZ);
+#ifdef DebugMode
+ printY = 0;
+#endif
 }
 
 // State machine logic
@@ -178,16 +184,24 @@ void SensorStateMachine()
     {
         case SENSOR_STATE_SLEEP:
             // Simulate waiting for the new hour or period
-            printf("sensor sm sleeping.\n");
+             #ifdef DebugMode
+          if (printY == 0)
+            {
+              printf("sensor sm sleeping.\n");
+             printY = 1;
+            }
+            #endif
  //           GoToSleep();
             // Transition to Listen state
             break;
         case SENSOR_STATE_NEW_SLOT:
           if  (GetCurrentMode() == MODE_INSTALLATION)
+            {
               if (g_instlCycleCnt > 1)
               {
                 g_instlCycleCnt--;
               }
+            }
               else
                 {
                   if (g_nCurTimeSlot >= 60)
@@ -198,7 +212,10 @@ void SensorStateMachine()
                     }
                 }
             if (ShouldListen())
-              currentSnsState = SENSOR_STATE_LISTEN;
+              {
+                RadioOn();
+                currentSnsState = SENSOR_STATE_LISTEN;
+              }
             else
               {
               if  (GetCurrentMode() == MODE_INSTALLATION)
@@ -258,7 +275,7 @@ void SensorStateMachine()
 
 bool IsSnsSmSleep()
 {
-  return currentSnsState == SENSOR_STATE_SLEEP;
+  return (currentSnsState == SENSOR_STATE_SLEEP);
 }
 
 //int main() {

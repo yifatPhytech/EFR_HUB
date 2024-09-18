@@ -9,12 +9,13 @@
 #include "libraries/Hub_Definition/hub_define.h"
 #include "libraries/Sensors_List/SenorsListHandle.h"
 #include "libraries/Sensors_List/slot_Handle.h"
+#include "libraries/system_mode/system_mode.h"
 
 uint64_t  g_lMySlots = 0;
 
 uint8_t RestoreSlot(uint8_t index)
 {
-  printf("RestoreSlot");
+  printf("\r\nRestoreSlot");
 //  Ecode_t res =  APP_ReadData(PAGE_DATA, OBJ_DATA);
 //  // if cant load from nvm - init all
 //  if (res != ECODE_EMDRV_NVM_OK)
@@ -36,7 +37,7 @@ uint8_t GetHashFreeSlot(uint32_t id)
   uint8_t n, hash, cnt = 0;
   uint64_t tmpSlot;
 
-  hash = (id + myData.m_ID) % MAX_SENSOR_SLOT;
+  hash = (id + sensorDetails.sensorID) % MAX_SENSOR_SLOT;
   do
   {
     n = hash % 6;//15;
@@ -48,7 +49,7 @@ uint8_t GetHashFreeSlot(uint32_t id)
       if ((g_lMySlots & tmpSlot) == 0)
       {
         g_lMySlots = g_lMySlots | tmpSlot;
-        printf("id: %d hash: %d ", id, hash);
+        printf("\r\nid: %d hash: %d ", id, hash);
         return hash;
       }
     }
@@ -65,7 +66,7 @@ uint8_t GetHashFreeSlot(uint32_t id)
 uint8_t SwapSlot(uint8_t index)
 {
   uint8_t newSlot;
-  printf("swap slot");
+  printf("\r\nswap slot");
   // find new slot
   newSlot = GetHashFreeSlot(MySensorsArr[index].ID);//GetNextFreeSlot(MySensorsArr[index].type);
   if (newSlot >= MAX_SENSOR_SLOT) //MAX_DATA)

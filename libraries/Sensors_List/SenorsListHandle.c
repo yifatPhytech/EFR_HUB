@@ -4,10 +4,10 @@
 #include "libraries/flash_storage/flash_storage.h"
 #include "libraries/Sensors_List/slot_Handle.h"
 
-#define SENSOR_BASIC_FLASH_ADDRESS 0x08000000  //
+#define SENSOR_BASIC_FLASH_ADDRESS 0x08070000 //0x08000000  //
 
 
-IDStruct myData;
+//IDStruct myData;
 SensorBasic AllSns[MAX_DATA];
 sensor MySensorsArr[MAX_DATA];
 //uint64_t  g_lMySlots = 0;
@@ -22,6 +22,17 @@ void readAllSnsFromFlash(void)
 {
     uint32_t len = sizeof(AllSns);
     readFlash_ucharArray(SENSOR_BASIC_FLASH_ADDRESS, (unsigned char*)AllSns, len);
+}
+
+void ResetAllSns()
+{
+  for (uint8_t i = 0; i < MAX_DATA; i++)
+    {
+  AllSns[i].snsID = 0;
+  AllSns[i].slot = 0;
+    }
+  printf("write to flash");
+  writeAllSnsToFlash();
 }
 
 void writeSensorBasicRowToFlash(uint32_t index)
@@ -98,7 +109,7 @@ void InitSensorArray()
     MySensorsArr[i].msr = NO_DATA;
     for (j = 0; j < MAX_HSTR_CNT; j++)
       MySensorsArr[i].HstrData[j] = NO_DATA;
-    printf("sensor %d at index %d slot %d" ,MySensorsArr[i].ID, i, MySensorsArr[i].slot.index);
+    printf("\r\nsensor %d at index %d slot %d\r\n" ,MySensorsArr[i].ID, i, MySensorsArr[i].slot.index);
     if (AllSns[i].slot != 0)
     {
       uint64_t n = (uint64_t)1 << AllSns[i].slot;
@@ -136,7 +147,7 @@ uint8_t GetSensorIndex(uint32_t senID)
 void RemoveSensor(uint8_t i)
 {
   uint64_t tmp;
-  printf("remove sensor %d from index %d", MySensorsArr[i].ID, i);
+  printf("\r\nremove sensor %d from index %d", MySensorsArr[i].ID, i);
   MySensorsArr[i].ID = 0;//DEFAULT_ID;
   MySensorsArr[i].slot.status = SLOT_STATUS_EMPTY;
   MySensorsArr[i].DailyCnct = 0;
@@ -199,7 +210,7 @@ int8_t InsertNewSensor(uint32_t senID,uint8_t senType, bool bMulti)
     AllSns[i].slot = nSlot;
     /////////////////////////////////////
     MySensorsArr[i].ID = senID;
-    printf("insert sensor: %d to index: %d", senID, i);
+    printf("\r\ninsert sensor: %d to index: %d", senID, i);
     MySensorsArr[i].Status = SEN_STATUS_CELL_EMPTY;
     for (j = 0; j < MAX_HSTR_CNT; j++)
       MySensorsArr[i].HstrData[j] = NO_DATA;
@@ -244,7 +255,7 @@ void ResetAllSensorsData()
         MySensorsArr[senIndex].msr = NO_DATA;
         for (uint8_t j = 0; j < MAX_HSTR_CNT; j++)
           MySensorsArr[senIndex].HstrData[j] = NO_DATA;
-        printf("data of index %d sent OK", senIndex);
+        printf("\r\ndata of index %d sent OK", senIndex);
       }
       senIndex++;
     }

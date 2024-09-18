@@ -102,13 +102,29 @@ static volatile bool rf_pwr_change = false;
 //                          Public Function Definitions
 // -----------------------------------------------------------------------------
 
+static const char *GetRfStateNames(state_t rfState)
+{
+  static const char *rfStateNames[] = {
+    [S_PACKET_RECEIVED] = "S_PACKET_RECEIVED",
+    [S_PACKET_START_SEND] = "S_PACKET_START_SEND",
+    [S_PACKET_SENT] = "S_PACKET_SENT",
+    [S_RX_PACKET_ERROR] = "S_RX_PACKET_ERROR",
+    [S_TX_PACKET_ERROR] = "S_TX_PACKET_ERROR",
+    [S_PACKET_WAIT_4_PARSE] = "S_PACKET_WAIT_4_PARSE",
+    [S_IDLE] = "S_IDLE",
+    [S_SET_RF_PWR] = "S_SET_RF_PWR"
+  };
+
+  return rfStateNames[rfState];
+}
+
 void ChangeRfPower(RAIL_Handle_t rail_handle, rf_power pwr)
 {
   if (g_curRfPwr == pwr)
     return;
   g_curRfPwr = pwr;
   RAIL_ConfigTxPower(rail_handle, tx_power_dbm[(uint8_t)pwr]);
-  printf("set RF power to %d", g_curRfPwr);
+  printf("\r\nset RF power to %d", g_curRfPwr);
 }
 
 /******************************************************************************
@@ -123,6 +139,7 @@ void app_process_action(RAIL_Handle_t rail_handle)
   RAIL_Status_t rail_status = RAIL_STATUS_NO_ERROR;
   RAIL_Status_t calibration_status_buff = RAIL_STATUS_NO_ERROR;
 
+  state_t prevStat = state;
 #if defined(SL_CATALOG_RAIL_SIMPLE_CPC_PRESENT)
   uint8_t success_sent = 0x01;
 #endif
@@ -155,9 +172,10 @@ void app_process_action(RAIL_Handle_t rail_handle)
   else if (rf_pwr_change)
     {
       rf_pwr_change = false;
-      state = S_SET_RF_PWR;
+//      state = S_SET_RF_PWR;
     }
-
+  if (prevStat != state)
+    printf("next RF state = %s\n", GetRfStateNames(state));
   switch (state)
   {
     case S_PACKET_RECEIVED:
@@ -390,19 +408,19 @@ RAIL_Status_t rf_send(RAIL_Handle_t rail_handle, uint8_t *packet, size_t packet_
 
   // Print the buffer for debugging
 #if defined(SL_CATALOG_APP_LOG_PRESENT)
-  printf("Sending Buffer: ");
+  printf("Sending Buffer: \n");
   for(size_t i = 0; i <= packet_len; i++) // <= to include the length byte
     {
-      printf("%d ", modified_packet[i]);
+      printf("%d ,", modified_packet[i]);
     }
-  printf("\n");
+  printf("\r\n");
 #else
-  printf("Sending Buffer: ");
+  printf("\r\nSending Buffer: ");
   for(size_t i = 0; i <= packet_len; i++) // <= to include the length byte
     {
-      printf("%02x ", modified_packet[i]);
+      printf("\r\n%02x ", modified_packet[i]);
     }
-  printf("\n");
+  printf("\r\n\n");
 #endif
 
   // Prepare the packet
@@ -427,7 +445,7 @@ RAIL_Status_t rf_send(RAIL_Handle_t rail_handle, uint8_t *packet, size_t packet_
 RAIL_Status_t rf_send_NG(RAIL_Handle_t rail_handle, uint8_t *packet, size_t packet_len)
 {
   // Debug print to log the original packet_len
-  printf("Original packet length: %zu\n", packet_len);
+  printf("\r\nOriginal packet length: %zu\n", packet_len);
 
   // Ensure that the packet_len can be accommodated in a uint8_t
   if (packet_len > UINT8_MAX || packet_len > SL_FLEX_RAIL_TX_FIFO_SIZE - 1) // -1 to account for the added length byte
@@ -440,23 +458,23 @@ RAIL_Status_t rf_send_NG(RAIL_Handle_t rail_handle, uint8_t *packet, size_t pack
   memcpy(&modified_packet[1], packet, packet_len); // Copy the rest of the packet
 
   // Debug print to log the modified packet length
-  printf("Modified packet length (with added length byte): %zu\n", packet_len + 1);
+  printf("\r\nModified packet length (with added length byte): %zu\n", packet_len + 1);
 
   // Print the buffer for debugging
 #if defined(SL_CATALOG_APP_LOG_PRESENT)
-  printf("Sending Buffer: ");
+  printf("\r\nSending Buffer: ");
   for(size_t i = 0; i <= packet_len; i++) // <= to include the length byte
     {
-      printf("%d ", modified_packet[i]);
+      printf("\r\n%d ", modified_packet[i]);
     }
-  printf("\n");
+  printf("\r\n\n");
 #else
-  printf("Sending Buffer: ");
+  printf("\r\nSending Buffer: ");
   for(size_t i = 0; i <= packet_len; i++) // <= to include the length byte
     {
-      printf("%02x ", modified_packet[i]);
+      printf("\r\n%02x ", modified_packet[i]);
     }
-  printf("\n");
+  printf("\r\n\n");
 #endif
 
   // Prepare the packet
@@ -481,7 +499,7 @@ RAIL_Status_t rf_send_NG(RAIL_Handle_t rail_handle, uint8_t *packet, size_t pack
 RAIL_Status_t rf_send_LEGACY(RAIL_Handle_t rail_handle, uint8_t *packet, size_t packet_len)
 {
   // Debug print to log the original packet_len
-  printf("Original packet length (LEGACY): %zu\n", packet_len);
+  printf("\r\nOriginal packet length (LEGACY): %zu\n", packet_len);
 
   // Ensure that the packet_len can be accommodated in a uint8_t
   if (packet_len > UINT8_MAX || packet_len > SL_FLEX_RAIL_TX_FIFO_SIZE)
@@ -490,12 +508,12 @@ RAIL_Status_t rf_send_LEGACY(RAIL_Handle_t rail_handle, uint8_t *packet, size_t 
     }
 
   // Print the buffer for debugging
-  printf("Sending Buffer (LEGACY): ");
+  printf("\r\nSending Buffer (LEGACY): ");
   for(size_t i = 0; i < packet_len; i++)
     {
-      printf("%d ", packet[i]);
+      printf("\r\n%d ", packet[i]);
     }
-  printf("\n");
+  printf("\r\n\n");
 
   // Prepare the packet
   prepare_package(rail_handle, packet, packet_len);
@@ -518,7 +536,7 @@ RAIL_Status_t rf_send_LEGACY(RAIL_Handle_t rail_handle, uint8_t *packet, size_t 
 
 RAIL_Status_t rf_send_adc_results(RAIL_Handle_t rail_handle, IADC_Result_t *adcResults, size_t length)
 {
-  printf("Ch0: %lu, Ch1: %lu, Ch2: %lu, Ch3: %lu\r\n",
+  printf("\r\nCh0: %lu, Ch1: %lu, Ch2: %lu, Ch3: %lu\r\n",
          (uint32_t)adcResults[0].data,
          (uint32_t)adcResults[1].data,
          (uint32_t)adcResults[2].data,
@@ -530,10 +548,10 @@ void BufferEnvelopeTransmit()
 {
   uint8_t bufLen = msgOut.Header.m_size;
     uint8_t radioTxPkt[bufLen];
-  printf("BufferEnvelopeTransmit");
+  printf("BufferEnvelopeTransmit size %d\n", bufLen);
   if (bufLen >= 64)
   {
-      printf("BufferEnvelopeTransmit: SIZE: %d too long. delete transmission", bufLen);//g_LoggerID = %d", g_LoggerID);
+      printf("\r\nBufferEnvelopeTransmit: SIZE: %d too long. delete transmission", bufLen);//g_LoggerID = %d", g_LoggerID);
     return;
   }
 
@@ -548,7 +566,7 @@ void BufferEnvelopeTransmit()
   {
     memcpy(tx_fifo, (uint8_t *) &msgOut, bufLen); // Copy the packet
 }
-  tx_fifo[bufLen] = GetCheckSum(tx_fifo, bufLen);
+  tx_fifo[bufLen-1] = GetCheckSum(tx_fifo, bufLen-1);
   dataSize = bufLen;
   packet_to_send = true;
 //  rf_send( rail_handle, radioTxPkt, bufLen+1);

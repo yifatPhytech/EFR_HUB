@@ -157,7 +157,7 @@ uint8_t BuildDataMsg()
 //  if (g_bAlert2Send == true)
 //    msgOut.Header.m_Header = HEADER_SND_DATA_ALERT;
   msgOut.Header.m_addressee = g_LoggerID;
-  msgOut.Header.m_ID = myData.m_ID;
+  msgOut.Header.m_ID = sensorDetails.sensorID;
   //set data
   do
   {
@@ -216,7 +216,7 @@ uint8_t BuildSnsPrmMsg()
 
   msgOut.Header.m_Header = HEADER_HUB_SNS_PRM;
   msgOut.Header.m_addressee = g_LoggerID;
-  msgOut.Header.m_ID = myData.m_ID;
+  msgOut.Header.m_ID = sensorDetails.sensorID;
 
   //set parameters
   do
@@ -282,7 +282,7 @@ uint8_t BuildConfigMsg()
   Uint64toBytes l2b;
   printf("BuildConfigMsg");
 
-  if (myData.m_ID == 0)
+  if (sensorDetails.sensorID == 0)
   {
     mntr.m_Header = HEADER_GETID;//0xA6;
     i2b.iVal = g_iBtr;
@@ -298,7 +298,7 @@ uint8_t BuildConfigMsg()
   else
   {
     mntr.m_Header = HEADER_ID_OK;
-    ui2b.iVal = myData.m_ID;
+    ui2b.iVal = sensorDetails.sensorID;
     Copy(&mntr.m_buffer[n], ui2b.bVal, 4);
     n += 4;
     mntr.m_size = n+2;//sizeof(mntrMsg.stage3Payload);
@@ -323,7 +323,7 @@ uint8_t BuildPrmMsg()
 
   msgOut.Header.m_Header = HEADER_HUB_PRM;
   msgOut.Header.m_addressee = g_LoggerID;
-  msgOut.Header.m_ID = myData.m_ID;
+  msgOut.Header.m_ID = sensorDetails.sensorID;
   msgOut.Header.m_size = sizeof(msgOut.Header) + sizeof(msgOut.HubPrmsExtPayload) + 1; // +1
 #ifdef TEST_BTR_MODE
   msgOut.Header.m_size = 63;
