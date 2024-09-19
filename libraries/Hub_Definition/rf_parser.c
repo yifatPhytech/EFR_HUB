@@ -5,6 +5,8 @@
  *      Author: Yifat
  */
 
+#include "sl_sleeptimer.h"
+
 #include "libraries/CommonHeaders/ProtocolDef.h"
 #include "libraries/CommonHeaders/ProtocolMonitorDef.h"
 #include "libraries/CommonHeaders/GlobalDefine.h"
@@ -18,6 +20,7 @@
 #include "libraries/Sensors_List/slot_Handle.h"
 #include "libraries/phytech_protocol/phytech_protocol.h"
 #include "libraries/Hub_Definition/logger_sm.h"
+#include "libraries/tools/tools.h"
 
 #define MIN_RSSI_4_ANSWER 60
 #define MIN_RSSI_4_DELAY  100
@@ -89,9 +92,9 @@ bool ParseSensorMsg()
   cs = GetCheckSum(&NewMsgStack[gReadStack].Buffer[1],size-1);
   if (NewMsgStack[gReadStack].Buffer[size] != cs)
   {
-#ifdef DEBUG_MODE
+//#ifdef DEBUG_MODE
     printf("wrong CS. size = %d, cs = %d, NewMsgStack[gReadStack][size] = %d", size, cs, NewMsgStack[gReadStack].Buffer[size]);
-#endif
+//#endif
     NewMsgStack[gReadStack].Status = CELL_EMPTY;
     return false;
   }
@@ -101,6 +104,8 @@ bool ParseSensorMsg()
   {
     ((( uint8_t *) &msgIn)[i]) = NewMsgStack[gReadStack].Buffer[i+1];
   }
+
+  printf("sensor ID: %lu to: %lu header: %d size: %d\n", msgIn.Header.m_ID, msgIn.Header.m_addressee, msgIn.Header.m_Header, msgIn.Header.m_size);
 
   if ((GetCurrentMode() == MODE_INSTALLATION)  && (msgIn.Header.m_Header == HEADER_HUB_STOP) && (size == (sizeof(msgIn.Header) + 1)))
   {
@@ -119,9 +124,9 @@ bool ParseSensorMsg()
     if (msgIn.Header.m_addressee != getSensorID())// myData.m_ID)
       if (msgIn.Header.m_addressee != DEFAULT_ID)
       {
-#ifdef DEBUG_MODE
-        printf("message not for me");
-#endif
+//#ifdef DEBUG_MODE
+        printf("message not for me\n");
+//#endif
         // if hub registered sensor before but it doesn't transmit to it - remove it from list
         senIndex = GetSensorIndex(msgIn.Header.m_ID);
         if (senIndex < MAX_DATA)
@@ -130,9 +135,9 @@ bool ParseSensorMsg()
         return false;
       }
 
-    printf("got %d message", msgIn.Header.m_Header);
+    printf("got %d message\n", msgIn.Header.m_Header);
     senIndex = GetSensorIndex(msgIn.Header.m_ID);
-    printf("sensor ID: %d at index %d slot: %d RSSI: %d", msgIn.Header.m_ID, senIndex, MySensorsArr[senIndex].slot.index, NewMsgStack[gReadStack].Rssi);
+    printf("sensor ID: %lu at index %d slot: %d RSSI: %d", msgIn.Header.m_ID, senIndex, MySensorsArr[senIndex].slot.index, NewMsgStack[gReadStack].Rssi);
     // not my sensor
     if (senIndex >= MAX_DATA)
     {
@@ -233,7 +238,7 @@ bool ParseSensorMsg()
       MySensorsArr[senIndex].btr = msgIn.PrmPayload.m_battery;
       MySensorsArr[senIndex].type = msgIn.PrmPayload.m_type;
       MySensorsArr[senIndex].rssi = NewMsgStack[gReadStack].Rssi;
-      printf("btr: %d, type: %d, ver: %d, RSSI: %d", MySensorsArr[senIndex].btr,MySensorsArr[senIndex].type,MySensorsArr[senIndex].version,MySensorsArr[senIndex].rssi);
+      printf("btr: %d, type: %d, ver: %lu, RSSI: %d", MySensorsArr[senIndex].btr,MySensorsArr[senIndex].type,MySensorsArr[senIndex].version,MySensorsArr[senIndex].rssi);
       break;
 
     case HEADER_SEN_LOST:
@@ -371,14 +376,14 @@ bool ParseLoggerMsg()
       writeFlash_uint32(SENSOR_ID_FLASH_PAGE_ADDRESS, sensor_id_from_monitor);
       initialize_sensor_details();
 //      myData.m_ID = Bytes2Long(&mntr.m_buffer[2]);
-      printf("set new ID: %d", getSensorID());
+      printf("set new ID: %lu", getSensorID());
 //      if (APP_StoreData(PAGE_ID_TYPE) != ECODE_EMDRV_NVM_OK)
 //        break;
 
       res = true;
       break;
     case MSG_DATA:
-      printf("Ack for data sending. from logger: %d. my logger %d", msgIn.Header.m_ID, g_LoggerID);
+      printf("Ack for data sending. from logger: %lu. my logger %lu\n", msgIn.Header.m_ID, g_LoggerID);
       //check if its the right message type
       if (msgIn.Header.m_Header != HEADER_SND_DATA_ACK)
         break;
@@ -387,6 +392,7 @@ bool ParseLoggerMsg()
       {
         g_nMin = msgIn.RecAckPayload.m_min;
         g_nSec = msgIn.RecAckPayload.m_sec;
+        printf("time: %d:%d\n", g_nMin, g_nSec);
         if ((!g_bOnReset) && (g_bIsFirstRound == true))
         {
           uint8_t t = (100 - g_time2EndHubSlot) / 10; // calc seconds from hub slot started
@@ -416,7 +422,7 @@ bool ParseLoggerMsg()
         if (g_LoggerID == DEFAULT_ID)
         {
           g_LoggerID = msgIn.Header.m_ID;
-          printf("logger ID: %d", g_LoggerID);
+          printf("logger ID: %lu\n", g_LoggerID);
           if (g_bOnReset == false)
             g_bSwapLgr = true;
         }

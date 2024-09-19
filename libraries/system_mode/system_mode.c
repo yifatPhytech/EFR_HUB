@@ -135,7 +135,7 @@ uint8_t getSensorType(void)
   return sensorDetails.sensorType;
 }
 
-void getFirmwareVersion(unsigned char version[4])
+void getFirmwareVersion(unsigned char* version)
 {
   version[0] = sensorDetails.fwVersionType;
   version[1] = sensorDetails.fwVersionMonth;

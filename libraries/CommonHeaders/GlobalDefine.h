@@ -87,7 +87,7 @@ typedef enum _ExtraDef
 	DEF_RESET = 2,
 	DEF_DBL = 4,
 	DEF_HST = 8,
-};
+}ExtraDef;
 
 typedef enum _MsgType
 {

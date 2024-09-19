@@ -7,18 +7,19 @@
 #include <stdio.h>
 #include <stdbool.h>
 //#include <unistd.h> // For sleep function, replace with your real-time system's sleep function
+#include "libraries/Hub_Definition/sensor_sm.h"
 
 #include "libraries/Sensors_List/SenorsListHandle.h"
-#include "libraries/Hub_Definition/rf_parser.h"
-#include "libraries/Hub_Definition/hub_define.h"
 #include "libraries/RADIO/radio_handler.h"
 #include "sl_flex_rail_package_assistant.h"
 #include "sl_flex_rail_package_assistant_config.h"
 #include "libraries/Sensors_List/slot_Handle.h"
 #include "libraries/phytech_protocol/phytech_protocol.h"
-#include "libraries/Hub_Definition/sensor_sm.h"
+#include "libraries/Hub_Definition/rf_parser.h"
+#include "libraries/Hub_Definition/hub_define.h"
 #include "libraries/Hub_Definition/hub_protocols.h"
 #include "libraries/Hub_Definition/rf_rx_handle.h"
+#include "libraries/Hub_Definition/logger_sm.h"
 #include "libraries/tools/timers.h"
 
 
@@ -26,7 +27,6 @@
 // Define states
 typedef enum {
     SENSOR_STATE_SLEEP,
-    SENSOR_STATE_NEW_SLOT,
     SENSOR_STATE_LISTEN,
     SENSOR_STATE_RECEIVE_MEASUREMENT,
     SENSOR_STATE_SEND_ACK,
@@ -40,7 +40,26 @@ bool measurementReceived = false;
 //sl_sleeptimer_timer_handle_t rtc10SecTimer;
 #ifdef DebugMode
 uint8_t printY = 0;
+uint16_t timeSlot = 0;
 #endif
+
+// Function to get the string representation of the SensorState
+const char* sensorStateToString(SensorState state) {
+    switch (state) {
+        case SENSOR_STATE_SLEEP:
+            return "SENSOR_STATE_SLEEP";
+        case SENSOR_STATE_LISTEN:
+            return "SENSOR_STATE_LISTEN";
+        case SENSOR_STATE_RECEIVE_MEASUREMENT:
+            return "SENSOR_STATE_RECEIVE_MEASUREMENT";
+        case SENSOR_STATE_SEND_ACK:
+            return "SENSOR_STATE_SEND_ACK";
+        case SENSOR_STATE_ERROR_HANDLING:
+            return "SENSOR_STATE_ERROR_HANDLING";
+        default:
+            return "UNKNOWN_STATE"; // Fallback for invalid state
+    }
+}
 
 bool IsBusySlotOrNeighbor(uint16_t slot, bool bCheckNeighbor)
 {
@@ -82,7 +101,7 @@ bool ShouldListen()
   uint8_t i = 0, slotOfSns = 0;
   g_CurSensorLsn = 0;
 
-  if (g_instlCycleCnt > 0)
+  if ((g_instlCycleCnt > 0) && (GetCurrentMode() == MODE_INSTALLATION))
     return true;
 
   if ((IsBusySlotOrNeighbor(g_nCurTimeSlot, true)) || (IsBusySlotOrNeighbor(g_nCurTimeSlot+g_nDeltaOfSlots, false)))  //((g_nDeltaOfSlots != 0) && (IsBusySlot(g_nCurTimeSlot+g_nDeltaOfSlots))))
@@ -171,7 +190,7 @@ void InitSensorSM()
   Set10SecTimer();
   printf("start sensors sm\n");
 //    SetCurrentMode(MODE_INSTALLATION);  // g_wCurMode = ;
-  SetTicksCnt( SLOT_INTERVAL_SEC * APP_RTC_FREQ_HZ);
+//  SetTicksCnt( SLOT_INTERVAL_SEC * APP_RTC_FREQ_HZ);
 #ifdef DebugMode
  printY = 0;
 #endif
@@ -180,6 +199,13 @@ void InitSensorSM()
 // State machine logic
 void SensorStateMachine()
 {
+  SensorState prevStat = currentSnsState;
+
+  if (timeSlot != g_nCurTimeSlot)
+    {
+      printf("current slot = %d\n", g_nCurTimeSlot);
+      timeSlot = g_nCurTimeSlot;
+    }
     switch (currentSnsState)
     {
         case SENSOR_STATE_SLEEP:
@@ -194,44 +220,24 @@ void SensorStateMachine()
  //           GoToSleep();
             // Transition to Listen state
             break;
-        case SENSOR_STATE_NEW_SLOT:
-          if  (GetCurrentMode() == MODE_INSTALLATION)
-            {
-              if (g_instlCycleCnt > 1)
-              {
-                g_instlCycleCnt--;
-              }
-            }
-              else
-                {
-                  if (g_nCurTimeSlot >= 60)
-                    {
-                      Stop10SecTimer();
-                      SetTimer4Logger();
-                      currentSnsState = SENSOR_STATE_SLEEP;
-                    }
-                }
-            if (ShouldListen())
-              {
-                RadioOn();
-                currentSnsState = SENSOR_STATE_LISTEN;
-              }
-            else
-              {
-              if  (GetCurrentMode() == MODE_INSTALLATION)
-                {
-                  g_bOnReset = false;
-                  InitLoggerSM();
-                }
-              currentSnsState = SENSOR_STATE_SLEEP;
-              }
-          break;
+
         case SENSOR_STATE_LISTEN:
 //            listenForSensors();
             // Transition to Receive Measurement state if a measurement is received
             // For simulation, we assume measurement is always received
           if (IsNewRxData())
+            {
               currentSnsState = SENSOR_STATE_RECEIVE_MEASUREMENT;
+
+            }
+          else
+            if  ((GetCurrentMode() == MODE_INSTALLATION) && (g_instlCycleCnt == 0))
+             {
+                currentSnsState = SENSOR_STATE_SLEEP;
+                SetCurrentMode(MODE_NONE);
+                g_bOnReset = false;
+                InitLoggerSM();
+             }
             break;
 
         case SENSOR_STATE_RECEIVE_MEASUREMENT:
@@ -271,6 +277,8 @@ void SensorStateMachine()
             printf("Unexpected state!\n");
             break;
     }
+    if (prevStat != currentSnsState)
+      printf("Sensor state changed from %s to %s\n", sensorStateToString(prevStat), sensorStateToString(currentSnsState));
 }
 
 bool IsSnsSmSleep()

@@ -7,13 +7,15 @@
 #include <stdio.h>
 #include <stdbool.h>
 //#include <unistd.h> // For sleep function, replace with your real-time system's sleep function
+#include "libraries/Hub_Definition/logger_sm.h"
+
 #include <libraries/106_BlinkLED/106_BlinkLED.h>
 
 #include "libraries/system_mode/system_mode.h"
 #include "libraries/Sensors_List/SenorsListHandle.h"
 #include "libraries/Hub_Definition/rf_parser.h"
+#include "libraries/Hub_Definition/rf_rx_handle.h"
 #include "libraries/Hub_Definition/hub_define.h"
-#include "libraries/Hub_Definition/logger_sm.h"
 #include "libraries/RADIO/radio_handler.h"
 #include "sl_flex_rail_package_assistant.h"
 #include "sl_flex_rail_package_assistant_config.h"
@@ -51,6 +53,8 @@ static rf_power   g_curLgrRfPwr;
 static uint16_t   g_time2StartSend;
 static uint8_t    g_nRfFail_cnt = 0;
 NonBlockingDelay ACK_timer_instance;               // NonBlockingDelay instance for LED toggle
+NonBlockingDelay  single_sec_timer;
+
 #ifdef DebugMode
 uint8_t printX = 0;
 #endif
@@ -102,7 +106,7 @@ static void SetCurrentMsgType(SendMsgType newMsgType)
     return;
   }
 
-  printf("\r\nmsgType %s (prev %s)", GetMessageTypeName(newMsgType), GetMessageTypeName(g_msgType));
+  printf("msgType %s (prev %s)\n", GetMessageTypeName(newMsgType), GetMessageTypeName(g_msgType));
   g_msgType = newMsgType;
 }
 
@@ -113,10 +117,10 @@ SendMsgType GetCurrentMsgType()
 
 void InitLoggerSM()
 {
+  uint32_t interval = 500;
 //  g_wCurMode = MODE_SENDING;
 //  g_nCurTask = TASK_BUILD_MSG;
   g_msgType = MSG_DATA;
-  Set10SecTimer();
   g_nRetryCnt = 0;
 //  g_nMaxRetryCnt = 0;
   g_bIsFirstRound = true;
@@ -126,7 +130,16 @@ void InitLoggerSM()
   SetNewRfPower(g_curLgrRfPwr);
   g_time2EndHubSlot = SLOT_INTERVAL_SEC * APP_RTC_FREQ_HZ;
   currentState = LOGGER_STATE_INIT;
-  NonBlockingDelay_Init(&ACK_timer_instance, 500);           // Initialize LED toggle delay
+  if (g_bOnReset)
+    {
+    interval = 2500;
+    NonBlockingDelay_Init(&single_sec_timer, 1000);
+
+    }
+  else
+    Set10SecTimer();
+
+  NonBlockingDelay_Init(&ACK_timer_instance, interval);           // Initialize LED toggle delay
 }
 
 void DefineRadio_PWR_LVL2LGR(uint8_t rssi)
@@ -179,6 +192,7 @@ LoggerState GetNextMission(bool bPrevMissionOK)
           SetCurrentMsgType( MSG_NONE);
           if (g_bOnReset)
             {
+              NonBlockingDelay_reset(&single_sec_timer);
               return LOGGER_STATE_SYNC;
             }
           }
@@ -191,7 +205,7 @@ void sendMeasurementsToLogger()
 {
   g_nRetryCnt++;
   // Simulate sending measurements to the logger
-  printf("Sending measurements to logger %d time...\n", g_nRetryCnt);
+  printf("Sending measurements to logger %dth time...\n", g_nRetryCnt);
   NonBlockingDelay_reset(&ACK_timer_instance);
   loggerAckReceived = false;
   BuildTx();
@@ -266,12 +280,24 @@ LoggerState handleError()
 
 bool SyncClock()
 {
+  if (NonBlockingDelay_check(&single_sec_timer))
+    {
+    g_nSec++;
+    if (g_nSec >= 60)
+      {
+        g_nSec = 0;
+        g_nMin++;
+        if (g_nMin >= 60)
+          g_nMin = 0;
+      }
+    NonBlockingDelay_reset(&single_sec_timer);
+    }
   if ((g_nSec % SLOT_INTERVAL_SEC) == 0)
   {
     g_nCurTimeSlot = (g_nMin * 60 + g_nSec) / SLOT_INTERVAL_SEC;//170;//
     if (g_nCurTimeSlot >= 360)
       g_nCurTimeSlot = 0;
-    printf("\r\nsynchronize! slot is: %d\nstart installation hour", g_nCurTimeSlot);
+    printf("synchronize! slot is: %d\nstart installation hour\n", g_nCurTimeSlot);
     g_instlCycleCnt = INSTALLATION_CYCLES;// should be: MAX_SLOT. for whole hour.
     g_hours2NextInstl = 6;
     g_bSendParams = true;

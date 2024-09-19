@@ -63,6 +63,7 @@ bool SaveNewPacket(uint8_t* radioRxPkt, uint16_t packet_length, int16_t nRssi)
       }
       if (packet_length > MAX_EZR_BUFFER_SIZE)
         return false;
+      printf("save packet at index %d\n", gWriteStack);
       memcpy(&NewMsgStack[gWriteStack].Buffer, radioRxPkt, packet_length);
 //      for (int8_t i = 0; i <= radioRxPkt[0]+1; i++)
 //        NewMsgStack[gWriteStack].Buffer[i] = radioRxPkt[i];

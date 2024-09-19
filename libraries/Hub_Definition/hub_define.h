@@ -3,6 +3,7 @@
 
 #include <stdbool.h>
 #include <stdint.h>
+#include "libraries/CommonHeaders/ProtocolDef.h"
 
 #define DebugMode
 
@@ -15,7 +16,7 @@
 #define SLOT_INTERVAL_SEC   10
 #define APP_RTC_TIMEOUT_1S (1000u)
 
-#define MAX_HSTR_CNT  12  //5
+//#define MAX_HSTR_CNT  12  //5
 #define MAX_SLOT  360
 #define CELL_EMPTY  0
 #define CELL_BUSY 1
@@ -128,6 +129,7 @@ void GoToSleep();
 void SetCurrentMode(WorkingMode newMode);
 void SetTicksCnt(uint16_t ticks);
 void RadioOn();
+void SetTimer4Sensors();
 
 
 extern uint32_t g_LoggerID;

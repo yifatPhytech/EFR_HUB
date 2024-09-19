@@ -45,7 +45,7 @@ static RAIL_Handle_t rail_handle;                     // RAIL handle for radio o
 //static bool is_hourly_or_explosive_message = false;   // is_hourly_or_explosive_message flag
 
 static WorkingMode g_wCurMode = MODE_SENDING;
-static Task       g_nCurTask = TASK_WAIT;
+//static Task       g_nCurTask = TASK_WAIT;
 static uint8_t    g_nRetryCnt = 0;
 static bool       g_bAlert2Send;
 bool       g_bIsFirstRound;
@@ -57,11 +57,12 @@ static bool       g_bHubRndSlot = false;
 static bool       g_bDataIn;
 volatile  uint16_t  g_nCurTimeSlot;
 static bool     g_bflagWakeup;
+static bool g_bSlotTimerInt = false;
 static  uint8_t   g_nHubSlot;
 static  bool    g_bRadioStateOpen;
 
 //static int8_t     gReadStack = 0;
-static int8_t     gWriteStack = 0;
+//static int8_t     gWriteStack = 0;
 volatile uint16_t g_instlCycleCnt;
 static uint8_t    g_nHour = 0;
 volatile uint8_t    g_nMin;
@@ -222,6 +223,9 @@ void MoveData2Hstr()
 {
 
 }
+
+
+
 void RTC_App_IRQHandler()   //100ms timer
 {
   if (rtcTickCnt > 0)
@@ -232,8 +236,7 @@ void RTC_App_IRQHandler()   //100ms timer
 
 void RTC_TimeSlot()   //10 sec timer
 {
-  g_nCurTimeSlot++;
-
+  g_bSlotTimerInt = true;
   g_bflagWakeup = true;
 }
 
@@ -582,6 +585,38 @@ void SetTimer4Sensors()
        break;
      } // SWITCH
 }*/
+void HandleSlotTimer()
+{
+  g_bSlotTimerInt = false;
+  g_nCurTimeSlot++;
+  if (g_nCurTimeSlot >= MAX_SLOT)
+    g_nCurTimeSlot = 0;
+  printf("current slot: %d\n", g_nCurTimeSlot);
+  if  (GetCurrentMode() == MODE_INSTALLATION)
+   {
+     if (g_instlCycleCnt > 1)
+     {
+       g_instlCycleCnt--;
+       printf("another %d slot to end Install hour\n", g_instlCycleCnt);
+     }
+   }
+   else
+     {
+       if (g_nCurTimeSlot >= 60)
+         {
+           Stop10SecTimer();
+           SetTimer4Logger();
+         }
+       else
+         {
+             if (ShouldListen())
+               {
+                 RadioOn();
+                 InitSensorSM();
+               }
+         }
+     }
+}
 
 
 int main(void)
@@ -656,7 +691,11 @@ int main(void)
       if (g_bflagWakeup)
         {
           g_bflagWakeup = false;
-          SetTimer(&rtc_tick_timer, 100, RTC_App_IRQHandler);
+          if (g_bSlotTimerInt)
+            {
+              HandleSlotTimer();
+            }
+//          SetTimer(&rtc_tick_timer, 100, RTC_App_IRQHandler);
         }
       switch (getSystemMode())
       {

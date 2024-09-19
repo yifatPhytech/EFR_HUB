@@ -73,7 +73,7 @@ bool handleOperationBySensorType(uint8_t sensorType);
 uint32_t getSensorID(void);
 //uint32_t getLoggerID(void);
 uint8_t getSensorType(void);
-void getFirmwareVersion(unsigned char version[4]);
+void getFirmwareVersion(unsigned char* version);
 
 // System mode related
 void setSystemParametersBySensorType(uint8_t sensorType);

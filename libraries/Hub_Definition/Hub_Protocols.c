@@ -5,7 +5,7 @@
  *      Author: Yifat
  */
 #include <stdio.h>                          // for printf function
-
+#include <string.h>
 #include <libraries/106_ADC/106_adc_reader.h>
 #include "libraries/CommonHeaders/ProtocolDef.h"
 #include "libraries/CommonHeaders/GlobalDefine.h"
@@ -14,6 +14,7 @@
 #include "libraries/Hub_Definition/hub_define.h"
 #include "libraries/Hub_Definition/hub_protocols.h"
 #include "libraries/phytech_protocol/phytech_protocol.h"
+#include "libraries/tools/tools.h"
 
 
 Sen_Hub_Rec_Msg msgOut;
@@ -70,7 +71,7 @@ uint8_t GetSensorDataLen(uint8_t senIndex)
 
 //  if ((g_bAlert2Send == true) && (MySensorsArr[senIndex].Status != SEN_STATUS_GOT_ALERT_DATA))
 //    return 0;
-  printf("index %d: check data of sensor %d. ", senIndex, MySensorsArr[senIndex].ID);
+  printf("index %d: check data of sensor %lu. ", senIndex, MySensorsArr[senIndex].ID);
     for (i = MAX_HSTR_CNT; i > 0; i--)
     {
       if (MySensorsArr[senIndex].HstrData[i-1] != NO_DATA)
@@ -81,7 +82,7 @@ uint8_t GetSensorDataLen(uint8_t senIndex)
   return (LENGTH_SNS_DATA_MSG + (i * 2));
 }
 
-uint8_t GetSensorData_n_History(uint8_t senIndex, uint8_t* tmp, uint8_t bufIndex)
+uint8_t GetSensorData_n_History(uint8_t senIndex, uint8_t* tmp)
 {
   uint8_t i;//, res = 0;
 
@@ -169,7 +170,7 @@ uint8_t BuildDataMsg()
       {
         if ((i + bufIndex) < MAX_PAYLOAD_LEN_NEW)
         {
-          i = GetSensorData_n_History(senIndex, &msgOut.HubDataPayload.m_data[bufIndex], bufIndex);
+          i = GetSensorData_n_History(senIndex, &msgOut.HubDataPayload.m_data[bufIndex]);
           bufIndex += i;
           MySensorsArr[senIndex].Status = SEN_STATUS_SEND_DATA;
   #ifdef DEBUG_MODE
@@ -228,15 +229,15 @@ uint8_t BuildSnsPrmMsg()
       if ((MySensorsArr[senIndex].DailyCnct == 0) && (MySensorsArr[senIndex].type != 0))
 //      if (MySensorsArr[senIndex].Status != SEN_STATUS_CELL_EMPTY)
       {
-        printf("get prms of sns = %d, btr = %d",MySensorsArr[senIndex].ID,MySensorsArr[senIndex].btr);
+        printf("get prms of sns = %lu, btr = %d",MySensorsArr[senIndex].ID,MySensorsArr[senIndex].btr);
 //        Copy(&msgOut.HubDataPayload.m_data[bufIndex], Long2Bytes(MySensorsArr[senIndex].ID),4);
-        uint32_to_little_endian(&msgOut.HubDataPayload.m_data[bufIndex], MySensorsArr[senIndex].ID);
+        uint32_to_little_endian(MySensorsArr[senIndex].ID, &msgOut.HubDataPayload.m_data[bufIndex]);
 //        Copy(, Int2Bytes(),2);
-        uint16_to_little_endian(&msgOut.HubDataPayload.m_data[bufIndex+4], MySensorsArr[senIndex].btr);
+        uint16_to_little_endian(MySensorsArr[senIndex].btr, &msgOut.HubDataPayload.m_data[bufIndex+4]);
         msgOut.HubDataPayload.m_data[bufIndex+6] = MySensorsArr[senIndex].type;
         msgOut.HubDataPayload.m_data[bufIndex+7] = MySensorsArr[senIndex].rssi;
 //        Copy(, Long2Bytes(),4);
-        uint32_to_little_endian(&msgOut.HubDataPayload.m_data[bufIndex+8], MySensorsArr[senIndex].version);
+        uint32_to_little_endian(MySensorsArr[senIndex].version, &msgOut.HubDataPayload.m_data[bufIndex+8]);
         MySensorsArr[senIndex].Status = SEN_STATUS_SEND_PRM;
         bufIndex += LENGTH_SNS_PRM_MSG;//sizeof(sp);
       }
@@ -309,15 +310,14 @@ uint8_t BuildConfigMsg()
 
 uint8_t BuildPrmMsg()
 {
-  union _FloatToBytes
-  {
-    float fVal;
-      uint8_t bVal[4];
-  } fl2byte;
-  char ver[4];
+//  union _FloatToBytes
+//  {
+//    float fVal;
+//      uint8_t bVal[4];
+//  } fl2byte;
+  uint8_t ver[4] = {0,0,0,0};
 
   g_iBtr = readADCChannel(ADC0_INTERNAL_BATT_PC2_CHANNEL_2);
-  printf("battery = %d", g_iBtr);
   g_bIsMoreData = false;
   g_bSendParams = false;
 
@@ -331,14 +331,14 @@ uint8_t BuildPrmMsg()
   msgOut.HubPrmsExtPayload.m_lat = GetNumSensors();//g_fLat;
 //  fl2byte.bVal[0] = g_nMaxRetryCnt;
 //  fl2byte.bVal[1] = g_curLgrRfPwr;
-  msgOut.HubPrmsExtPayload.m_lon = fl2byte.fVal;  //g_fLon;
+  msgOut.HubPrmsExtPayload.m_lon = 0;//fl2byte.fVal;  //g_fLon;
 //  g_fLon = g_nMaxRetryCnt;
   getFirmwareVersion(ver);
 
-  msgOut.HubPrmsExtPayload.m_version = little_endian_to_uint32(ver);// Bytes2Long((uint8_t*)ver);
+  msgOut.HubPrmsExtPayload.m_version = little_endian_to_uint32((const uint8_t *)ver);// Bytes2Long((uint8_t*)ver);
   msgOut.HubPrmsExtPayload.m_battery = g_iBtr;
 
-  printf("BuildPrmMsg. header %d", msgOut.Header.m_Header);
+  printf("BuildPrmMsg. header %d battery = %d\n", msgOut.Header.m_Header, g_iBtr);
   return 1;
 }
 

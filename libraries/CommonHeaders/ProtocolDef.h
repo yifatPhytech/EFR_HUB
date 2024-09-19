@@ -9,7 +9,7 @@
 #define LENGTH_SNS_OFF_MSG	6
 #define LENGTH_SNS_PRM_MSG	12
 #define LENGTH_MULTY_SNS_DATA_MSG	30
-#define MAX_HSTR_CNT	5
+#define MAX_HSTR_CNT	12//5
 
 #pragma pack(push,1)
 typedef struct _ProtocolHeader
