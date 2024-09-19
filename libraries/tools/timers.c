@@ -12,6 +12,7 @@
 void SetTimer(sl_sleeptimer_timer_handle_t* timer, uint32_t timeout, void *callback_data)
 {
   bool bTimerRun = false;
+  printf("set new timer for %lu ms", timeout);
     if (sl_sleeptimer_is_timer_running(timer, &bTimerRun) == SL_STATUS_OK)
       {
         if (bTimerRun)

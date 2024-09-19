@@ -87,7 +87,7 @@ void set_radio_to_wakeup_mode(void)
   if (status != RAIL_STATUS_NO_ERROR)
     {
       CORE_ExitCritical(irqState);
-      printf("Error: cannot set radio to sleep. Status: %d\n", status);
+      printf("Error: cannot set radio to wakeup. Status: %d\n", status);
     }
   else
     {

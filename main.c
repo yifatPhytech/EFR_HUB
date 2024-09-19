@@ -117,6 +117,7 @@ static const char *GetModeName(WorkingMode mode)
     [MODE_GPS] = "GPS",
     [MODE_WRITE_EEPROM] = "WRITE_EEPROM",
     [MODE_SLEEPING] = "SLEEPING",
+    [MODE_END_INSTALL] = "MODE_END_INSTALL",
   };
 
   return mode < sizeof(modeNames) / sizeof(modeNames[0]) ? modeNames[mode] : "???";
@@ -224,8 +225,6 @@ void MoveData2Hstr()
 
 }
 
-
-
 void RTC_App_IRQHandler()   //100ms timer
 {
   if (rtcTickCnt > 0)
@@ -301,7 +300,7 @@ void DeepSleep()
 
 void GoToSleep()
 {
-  printf("\r\nGoToSleep");
+  printf("GoToSleep\n");
   StopTimer(&rtc_tick_timer);
   ResetAll();
 //  if (RTCDRV_IsRunning(rtc10SecTimer, &bTimerRun) == ECODE_EMDRV_RTCDRV_OK) //todo add
@@ -594,10 +593,16 @@ void HandleSlotTimer()
   printf("current slot: %d\n", g_nCurTimeSlot);
   if  (GetCurrentMode() == MODE_INSTALLATION)
    {
-     if (g_instlCycleCnt > 1)
+     if (g_instlCycleCnt >= 1)
      {
        g_instlCycleCnt--;
        printf("another %d slot to end Install hour\n", g_instlCycleCnt);
+       if  (g_instlCycleCnt == 0)
+        {
+            SetCurrentMode(MODE_END_INSTALL);
+//           g_bOnReset = false;
+//           InitLoggerSM();
+        }
      }
    }
    else

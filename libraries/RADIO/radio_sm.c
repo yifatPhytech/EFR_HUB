@@ -124,7 +124,7 @@ void ChangeRfPower(RAIL_Handle_t rail_handle, rf_power pwr)
     return;
   g_curRfPwr = pwr;
   RAIL_ConfigTxPower(rail_handle, tx_power_dbm[(uint8_t)pwr]);
-  printf("\r\nset RF power to %d", g_curRfPwr);
+  printf("\r\nset RF power to %d\n", g_curRfPwr);
 }
 
 /******************************************************************************
@@ -138,6 +138,7 @@ void app_process_action(RAIL_Handle_t rail_handle)
   // Status indicator of the RAIL API calls
   RAIL_Status_t rail_status = RAIL_STATUS_NO_ERROR;
   RAIL_Status_t calibration_status_buff = RAIL_STATUS_NO_ERROR;
+  int16_t nRSSI;
 
   state_t prevStat = state;
 #if defined(SL_CATALOG_RAIL_SIMPLE_CPC_PRESENT)
@@ -190,6 +191,7 @@ void app_process_action(RAIL_Handle_t rail_handle)
           {
             uint8_t *start_of_packet = 0;
             uint16_t packet_size = unpack_packet(rx_fifo, &packet_info, &start_of_packet);
+            nRSSI = RAIL_GetRssi(rail_handle, true);
             rail_status = RAIL_ReleaseRxPacket(rail_handle, rx_packet_handle);
             if (rail_status != RAIL_STATUS_NO_ERROR)
               {
@@ -199,7 +201,7 @@ void app_process_action(RAIL_Handle_t rail_handle)
               }
             if (rx_requested)
               {
-                int16_t nRSSI = RAIL_GetRssi(rail_handle, false);
+                nRSSI = RAIL_GetRssi(rail_handle, false);
                 printf_rx_packet(start_of_packet, packet_size);
                 SaveNewPacket(start_of_packet, packet_size, nRSSI);
 

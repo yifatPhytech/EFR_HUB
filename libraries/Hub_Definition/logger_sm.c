@@ -151,7 +151,7 @@ void DefineRadio_PWR_LVL2LGR(uint8_t rssi)
     if ((rssi < 70) && (g_curLgrRfPwr < POWER_OUT_3))
       g_curLgrRfPwr++;
 
-  printf("\r\nrssi %d, cur rf power: %d next: %d", rssi, requiredPwr, g_curLgrRfPwr);
+  printf("\r\nrssi %d, cur rf power: %d next: %d\n", rssi, requiredPwr, g_curLgrRfPwr);
   SetNewRfPower(g_curLgrRfPwr);
 }
 
@@ -363,7 +363,7 @@ void LoggerStateMachine()
           Stop10SecTimer();
           SetTimer4Sensors();
           currentState = LOGGER_STATE_SLEEP;
-          break;
+           break;
 
         default:
             // Unexpected state

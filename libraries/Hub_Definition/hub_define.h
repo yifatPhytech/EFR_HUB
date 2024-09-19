@@ -49,6 +49,7 @@ typedef enum _WorkingMode
   MODE_GPS,
   MODE_WRITE_EEPROM,
   MODE_SLEEPING,
+  MODE_END_INSTALL,
 }WorkingMode;
 
 

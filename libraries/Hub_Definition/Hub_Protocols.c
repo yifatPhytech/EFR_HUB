@@ -71,7 +71,7 @@ uint8_t GetSensorDataLen(uint8_t senIndex)
 
 //  if ((g_bAlert2Send == true) && (MySensorsArr[senIndex].Status != SEN_STATUS_GOT_ALERT_DATA))
 //    return 0;
-  printf("index %d: check data of sensor %lu. ", senIndex, MySensorsArr[senIndex].ID);
+  printf("index %d: check data of sensor %lu. \n", senIndex, MySensorsArr[senIndex].ID);
     for (i = MAX_HSTR_CNT; i > 0; i--)
     {
       if (MySensorsArr[senIndex].HstrData[i-1] != NO_DATA)
@@ -114,7 +114,7 @@ uint8_t GetSensorData_n_History(uint8_t senIndex, uint8_t* tmp)
     tmp[i+2] = (((uint8_t*)&(MySensorsArr[senIndex]))[i]);
 
 #ifdef DEBUG_MODE
-  printf("index %d: send data of sensor %d. ", senIndex, MySensorsArr[senIndex].ID);
+  printf("index %d: send data of sensor %d. \n", senIndex, MySensorsArr[senIndex].ID);
 #endif
     //add history at the end of msg
     for (i = MAX_HSTR_CNT; i > 0; i--)
@@ -122,7 +122,7 @@ uint8_t GetSensorData_n_History(uint8_t senIndex, uint8_t* tmp)
       if (MySensorsArr[senIndex].HstrData[i-1] != NO_DATA)
       {
 #ifdef DEBUG_MODE
-        printf("found history (%d) at index %d", MySensorsArr[senIndex].HstrData[i-1] ,i);
+        printf("found history (%d) at index %d\n", MySensorsArr[senIndex].HstrData[i-1] ,i);
 #endif
         break;
       }
@@ -174,7 +174,7 @@ uint8_t BuildDataMsg()
           bufIndex += i;
           MySensorsArr[senIndex].Status = SEN_STATUS_SEND_DATA;
   #ifdef DEBUG_MODE
-          printf("add %d bytes to buffer. total len is: %d", i, bufIndex);
+          printf("add %d bytes to buffer. total len is: %d\n", i, bufIndex);
   #endif
           senIndex++;
         }
@@ -195,7 +195,7 @@ uint8_t BuildDataMsg()
     msgOut.HubDataPayload.m_data[0] = 0;
     bufIndex = 1;
 #ifdef DEBUG_MODE
-    printf("empty");
+    printf("empty\n");
 #endif
   }
 
@@ -211,9 +211,9 @@ uint8_t BuildSnsPrmMsg()
 {
   uint8_t bufIndex = 0,/*INDEX_DATA,*/ senIndex = g_nIndex2SendPrm;
   g_bIsMoreData = false;
-#ifdef DEBUG_MODE
-  printf("BuildSnsPrmMsg. from index %d", senIndex);
-#endif
+//#ifdef DEBUG_MODE
+  printf("BuildSnsPrmMsg. from index %d\n", senIndex);
+//#endif
 
   msgOut.Header.m_Header = HEADER_HUB_SNS_PRM;
   msgOut.Header.m_addressee = g_LoggerID;
@@ -229,7 +229,7 @@ uint8_t BuildSnsPrmMsg()
       if ((MySensorsArr[senIndex].DailyCnct == 0) && (MySensorsArr[senIndex].type != 0))
 //      if (MySensorsArr[senIndex].Status != SEN_STATUS_CELL_EMPTY)
       {
-        printf("get prms of sns = %lu, btr = %d",MySensorsArr[senIndex].ID,MySensorsArr[senIndex].btr);
+        printf("get prms of sns = %lu, btr = %d\n",MySensorsArr[senIndex].ID,MySensorsArr[senIndex].btr);
 //        Copy(&msgOut.HubDataPayload.m_data[bufIndex], Long2Bytes(MySensorsArr[senIndex].ID),4);
         uint32_to_little_endian(MySensorsArr[senIndex].ID, &msgOut.HubDataPayload.m_data[bufIndex]);
 //        Copy(, Int2Bytes(),2);
@@ -242,7 +242,7 @@ uint8_t BuildSnsPrmMsg()
         bufIndex += LENGTH_SNS_PRM_MSG;//sizeof(sp);
       }
       else
-        printf("no type or not connected");
+        printf("no type or not connected\n");
       senIndex++;
       // if can not add anothe sensor parameters cos it ll be too long-
       if ((bufIndex + LENGTH_SNS_PRM_MSG/*sizeof(sp)*/) >= MAX_PAYLOAD_LEN_NEW)
@@ -264,9 +264,8 @@ uint8_t BuildSnsPrmMsg()
   {
 //    msgOut.HubDataPayload.m_data[0] = 0;
 //    bufIndex = 1;
-#ifdef DEBUG_MODE
-    printf("empty. nothing to send");
-#endif
+    printf("empty. nothing to send\n");
+//#endif
   }
 
   // write size
@@ -360,7 +359,7 @@ uint8_t BuildTx()
       break;
     case MSG_CONFIG:
       g_iBtr = (uint16_t)readADCChannel(ADC0_INTERNAL_BATT_PC2_CHANNEL_2);  //EZR32_GetBattVoltage_mV();
-      printf("Btr = %d", g_iBtr);
+      printf("Btr = %d\n", g_iBtr);
       res = BuildConfigMsg();
       break;
     case MSG_FW_UPDATE:

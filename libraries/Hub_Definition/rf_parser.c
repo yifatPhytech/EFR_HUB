@@ -50,7 +50,7 @@ int16_t CalcDrift()
   bool bNeg = false;
   m = g_nCurTimeSlot / 6;
   s = 10 * (g_nCurTimeSlot % 6 ) + ((100 - g_time2EndHubSlot) / 10);  // calc seconds from hub slot started
-  printf("hub clock: %d:%d", m,s);
+  printf("hub clock: %d:%d\n", m,s);
   if (g_nMin == m)
     return (s - g_nSec);
   else
@@ -93,7 +93,7 @@ bool ParseSensorMsg()
   if (NewMsgStack[gReadStack].Buffer[size] != cs)
   {
 //#ifdef DEBUG_MODE
-    printf("wrong CS. size = %d, cs = %d, NewMsgStack[gReadStack][size] = %d", size, cs, NewMsgStack[gReadStack].Buffer[size]);
+    printf("wrong CS. size = %d, cs = %d, NewMsgStack[gReadStack][size] = %d\n", size, cs, NewMsgStack[gReadStack].Buffer[size]);
 //#endif
     NewMsgStack[gReadStack].Status = CELL_EMPTY;
     return false;
@@ -105,11 +105,12 @@ bool ParseSensorMsg()
     ((( uint8_t *) &msgIn)[i]) = NewMsgStack[gReadStack].Buffer[i+1];
   }
 
+  NewMsgStack[gReadStack].Status = CELL_EMPTY;
   printf("sensor ID: %lu to: %lu header: %d size: %d\n", msgIn.Header.m_ID, msgIn.Header.m_addressee, msgIn.Header.m_Header, msgIn.Header.m_size);
 
   if ((GetCurrentMode() == MODE_INSTALLATION)  && (msgIn.Header.m_Header == HEADER_HUB_STOP) && (size == (sizeof(msgIn.Header) + 1)))
   {
-    printf("got stop signal");
+    printf("got stop signal\n");
     g_instlCycleCnt = 1;
     g_hours2NextInstl = 0;
     msgOut = msgIn;
@@ -137,11 +138,11 @@ bool ParseSensorMsg()
 
     printf("got %d message\n", msgIn.Header.m_Header);
     senIndex = GetSensorIndex(msgIn.Header.m_ID);
-    printf("sensor ID: %lu at index %d slot: %d RSSI: %d", msgIn.Header.m_ID, senIndex, MySensorsArr[senIndex].slot.index, NewMsgStack[gReadStack].Rssi);
+    printf("sensor ID: %lu at index %d slot: %d RSSI: %d\n", msgIn.Header.m_ID, senIndex, MySensorsArr[senIndex].slot.index, NewMsgStack[gReadStack].Rssi);
     // not my sensor
     if (senIndex >= MAX_DATA)
     {
-      printf("not my sensor");
+      printf("not my sensor\n");
 
         // only for installation (HUB & SENSORS)- delay ack according to RSSI
         if (GetCurrentMode() == MODE_INSTALLATION)
@@ -173,7 +174,7 @@ bool ParseSensorMsg()
         if (senIndex == -1) //MAX_DATA)
         {
 #ifdef DEBUG_MODE
-          printf("not enough space for more sensor");
+          printf("not enough space for more sensor\n");
 #endif
         // cant insert this sensor
           return false;
@@ -187,7 +188,7 @@ bool ParseSensorMsg()
       nSlot = RestoreSlot(senIndex);
       if (nSlot >= MAX_SENSOR_SLOT) //MAX_DATA)
       {
-        printf("unreasonable slot. ");
+        printf("unreasonable slot. \n");
         nSlot = SwapSlot(senIndex);
         if (nSlot >= MAX_SENSOR_SLOT) //MAX_DATA)
           return false;
@@ -238,7 +239,7 @@ bool ParseSensorMsg()
       MySensorsArr[senIndex].btr = msgIn.PrmPayload.m_battery;
       MySensorsArr[senIndex].type = msgIn.PrmPayload.m_type;
       MySensorsArr[senIndex].rssi = NewMsgStack[gReadStack].Rssi;
-      printf("btr: %d, type: %d, ver: %lu, RSSI: %d", MySensorsArr[senIndex].btr,MySensorsArr[senIndex].type,MySensorsArr[senIndex].version,MySensorsArr[senIndex].rssi);
+      printf("btr: %d, type: %d, ver: %lu, RSSI: %d\n", MySensorsArr[senIndex].btr,MySensorsArr[senIndex].type,MySensorsArr[senIndex].version,MySensorsArr[senIndex].rssi);
       break;
 
     case HEADER_SEN_LOST:
@@ -309,14 +310,14 @@ bool ParseSensorMsg()
     msgOut.AckExtPayload.m_slot = nSlot;
     msgOut.AckExtPayload.m_sec2cnct = GetSecToConnect(nSlot)/*+1*/; // add 1 sec in order to be on the safe side
     msgOut.AckExtPayload.m_sec4Burst = 0; //GetSecToBurst();
-    printf("Second to connect: %d", msgOut.AckExtPayload.m_sec2cnct);
+    printf("Second to connect: %d\n", msgOut.AckExtPayload.m_sec2cnct);
     msgOut.AckExtPayload.m_HeardRssi = NewMsgStack[gReadStack].Rssi;
     res = true;
   }
   else
   {
 #ifdef DEBUG_MODE
-    printf("not sensor msg");
+    printf("not sensor msg\n");
     return false;
 #endif
   }
@@ -331,11 +332,11 @@ bool ParseLoggerMsg()
   uint8_t res = false;
   SendMsgType type;
 
-  printf("ParseLoggerMsg. size= %d, gReadStack = %d", size, gReadStack);
+  printf("ParseLoggerMsg. size= %d, gReadStack = %d\n", size, gReadStack);
   cs = GetCheckSum(&NewMsgStack[gReadStack].Buffer[1],size-1);
   if (NewMsgStack[gReadStack].Buffer[size] != cs)
   {
-    printf("wrong CS. size = %d, cs = %d, NewMsgStack[gReadStack][size] = %d", size, cs, NewMsgStack[gReadStack].Buffer[size]);
+    printf("wrong CS. size = %d, cs = %d, NewMsgStack[gReadStack][size] = %d\n", size, cs, NewMsgStack[gReadStack].Buffer[size]);
     NewMsgStack[gReadStack].Status = CELL_EMPTY;
     return false;
   }
@@ -365,7 +366,7 @@ bool ParseLoggerMsg()
     case MSG_CONFIG:
       if (mntr.m_Header != HEADER_GETID_ACK)
       {
-        printf("Header not Fit");
+        printf("Header not Fit\n");
         break;
       }
 //      if (Bytes2Int(&mntr.m_buffer[0]) != g_iBtr) //todo
@@ -376,7 +377,7 @@ bool ParseLoggerMsg()
       writeFlash_uint32(SENSOR_ID_FLASH_PAGE_ADDRESS, sensor_id_from_monitor);
       initialize_sensor_details();
 //      myData.m_ID = Bytes2Long(&mntr.m_buffer[2]);
-      printf("set new ID: %lu", getSensorID());
+      printf("set new ID: %lu\n", getSensorID());
 //      if (APP_StoreData(PAGE_ID_TYPE) != ECODE_EMDRV_NVM_OK)
 //        break;
 
@@ -397,7 +398,7 @@ bool ParseLoggerMsg()
         {
           uint8_t t = (100 - g_time2EndHubSlot) / 10; // calc seconds from hub slot started
           int16_t dl = CalcDrift();
-          printf("logger time: %d:%d. Sec from Slot started: %d drift: %d", g_nMin, g_nSec, t, dl);
+          printf("logger time: %d:%d. Sec from Slot started: %d drift: %d\n", g_nMin, g_nSec, t, dl);
 //          if ((dl > -10) && (dl < 0))     //todo
 //          {
 //            uint16_t t = g_time2EndHubSlot + (dl * 10);
@@ -410,7 +411,7 @@ bool ParseLoggerMsg()
           if ((curSlot != g_nCurTimeSlot))
           {
             g_nDeltaOfSlots = g_nCurTimeSlot - curSlot; //
-            printf("different between hub slot to rec slot of %d", g_nDeltaOfSlots);
+            printf("different between hub slot to rec slot of %d\n", g_nDeltaOfSlots);
 //            if ((g_nDeltaOfSlots != -1) && (g_nDeltaOfSlots != -2) && (g_nDeltaOfSlots != 1))   //todo
 //            {
 //              g_nCurTimeSlot = curSlot;
@@ -461,7 +462,7 @@ bool ParseLoggerMsg()
           if (MySensorsArr[senIndex].Status == SEN_STATUS_SEND_PRM)
           {
             MySensorsArr[senIndex].Status = SEN_STATUS_CELL_EMPTY;  //SEN_STATUS_DATA_OK;//
-            printf("Parameters of index %d sent OK", senIndex);
+            printf("Parameters of index %d sent OK\n", senIndex);
           }
           senIndex++;
         }

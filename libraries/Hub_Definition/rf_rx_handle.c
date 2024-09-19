@@ -4,6 +4,7 @@
  *  Created on: Sep 10, 2024
  *      Author: Yifat
  */
+#include "string.h"
 #include "libraries/Hub_Definition/hub_define.h"
 #include "libraries/Hub_Definition/rf_rx_handle.h"
 
@@ -58,12 +59,12 @@ bool SaveNewPacket(uint8_t* radioRxPkt, uint16_t packet_length, int16_t nRssi)
   uint8_t gWriteStack = GetFirstEmptyCell();
       if (gWriteStack == MAX_MSG_IN_STACK)
       {
-        printf("doesn't have empty cell. missed msg");
+        printf("doesn't have empty cell. missed msg\n");
         return false;
       }
       if (packet_length > MAX_EZR_BUFFER_SIZE)
         return false;
-      printf("save packet at index %d\n", gWriteStack);
+      printf("save packet at index %d RSSI: %d\n", gWriteStack, nRssi);
       memcpy(&NewMsgStack[gWriteStack].Buffer, radioRxPkt, packet_length);
 //      for (int8_t i = 0; i <= radioRxPkt[0]+1; i++)
 //        NewMsgStack[gWriteStack].Buffer[i] = radioRxPkt[i];

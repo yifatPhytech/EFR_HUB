@@ -121,7 +121,7 @@ bool ShouldListen()
           }
           else
           {
-            printf("\r\nno need to listen to sensor %lu this hour", MySensorsArr[i].ID);
+            printf("\r\nno need to listen to sensor %lu this hour\n", MySensorsArr[i].ID);
             return false;
           }
         }
@@ -201,11 +201,6 @@ void SensorStateMachine()
 {
   SensorState prevStat = currentSnsState;
 
-  if (timeSlot != g_nCurTimeSlot)
-    {
-      printf("current slot = %d\n", g_nCurTimeSlot);
-      timeSlot = g_nCurTimeSlot;
-    }
     switch (currentSnsState)
     {
         case SENSOR_STATE_SLEEP:
@@ -231,13 +226,15 @@ void SensorStateMachine()
 
             }
           else
-            if  ((GetCurrentMode() == MODE_INSTALLATION) && (g_instlCycleCnt == 0))
-             {
-                currentSnsState = SENSOR_STATE_SLEEP;
-                SetCurrentMode(MODE_NONE);
-                g_bOnReset = false;
-                InitLoggerSM();
-             }
+            {
+            if (GetCurrentMode() == MODE_END_INSTALL)
+              {
+              currentSnsState = SENSOR_STATE_SLEEP;
+              g_bOnReset = false;
+              InitLoggerSM();
+              SetCurrentMode(MODE_NONE);
+              }
+            }
             break;
 
         case SENSOR_STATE_RECEIVE_MEASUREMENT:
