@@ -76,7 +76,7 @@ bool g_bMissionCompleted;
 bool     g_bIsMoreData;
 uint16_t  g_time2EndHubSlot;
 
-sl_sleeptimer_timer_handle_t rtc_tick_timer;
+//sl_sleeptimer_timer_handle_t rtc_tick_timer;
 sl_sleeptimer_timer_handle_t rtc10SecTimer;
 sl_sleeptimer_timer_handle_t rtcHubLgrTimer;
 
@@ -225,13 +225,13 @@ void MoveData2Hstr()
 
 }
 
-void RTC_App_IRQHandler()   //100ms timer
-{
-  if (rtcTickCnt > 0)
-    rtcTickCnt--;
-  if (g_time2EndHubSlot > 0)
-    g_time2EndHubSlot--;
-}
+//void RTC_App_IRQHandler()   //100ms timer
+//{
+//  if (rtcTickCnt > 0)
+//    rtcTickCnt--;
+//  if (g_time2EndHubSlot > 0)
+//    g_time2EndHubSlot--;
+//}
 
 void RTC_TimeSlot()   //10 sec timer
 {
@@ -239,18 +239,26 @@ void RTC_TimeSlot()   //10 sec timer
   g_bflagWakeup = true;
 }
 
+
+uint8_t CalcHubSlot()
+{
+  return (g_nHubSlot * 15 + 62);
+}
+
 void RTC_HubSlotTimer()
 {
-  g_nCurTimeSlot = g_nHubSlot;
+  g_nCurTimeSlot = CalcHubSlot();
   StopTimer(&rtcHubLgrTimer);
   InitLoggerSM();
+  g_bflagWakeup = true;
 }
 
 void RTC_SnsSlotTimer()
 {
   g_nCurTimeSlot = 0;
   StopTimer(&rtcHubLgrTimer);
-  InitSensorSM();
+//  InitSensorSM();
+  g_bflagWakeup = true;
 }
 
 void RadioOn()
@@ -301,7 +309,7 @@ void DeepSleep()
 void GoToSleep()
 {
   printf("GoToSleep\n");
-  StopTimer(&rtc_tick_timer);
+//  StopTimer(&rtc_tick_timer);
   ResetAll();
 //  if (RTCDRV_IsRunning(rtc10SecTimer, &bTimerRun) == ECODE_EMDRV_RTCDRV_OK) //todo add
 //    if (bTimerRun == false)
@@ -318,6 +326,7 @@ void GoToSleep()
   g_bflagWakeup = false;
   if (GetCurrentMode() == MODE_SLEEPING)
     DeepSleep();
+  sl_sleeptimer_delay_millisecond(1000);
   while (g_bflagWakeup == false)
     EMU_EnterEM2(true);
 }
@@ -462,24 +471,32 @@ void Stop10SecTimer()
   StopTimer(&rtc10SecTimer);
 
 }
+
 uint32_t CalcTimeToHubSlot()
 {
-  return (g_nHubSlot - g_nCurTimeSlot) * 10;
+  uint8_t n = CalcHubSlot();
+  if (g_nCurTimeSlot <= g_nHubSlot)
+    return (g_nHubSlot - g_nCurTimeSlot) * 10;
+  return (MAX_SLOT - g_nCurTimeSlot + g_nHubSlot);
 }
 
 uint32_t CalcTimeToSnsSlot()
 {
-  return (MAX_SLOT - g_nHubSlot) * 10;
+  return (MAX_SLOT - g_nCurTimeSlot) * 10;
 }
 
 void SetTimer4Logger()
 {
-  SetTimer(&rtcHubLgrTimer, APP_RTC_TIMEOUT_1S * CalcTimeToHubSlot(), RTC_HubSlotTimer);
+  uint32_t t = CalcTimeToHubSlot();
+  printf("set timer to wu in %lu seconds\n", t);
+  SetTimer(&rtcHubLgrTimer, APP_RTC_TIMEOUT_1S * t, RTC_HubSlotTimer);
 }
 
 void SetTimer4Sensors()
 {
-  SetTimer(&rtcHubLgrTimer, APP_RTC_TIMEOUT_1S * CalcTimeToHubSlot(), RTC_SnsSlotTimer);
+  uint32_t t = CalcTimeToSnsSlot();
+  printf("set timer to wu in %lu seconds\n", t);
+  SetTimer(&rtcHubLgrTimer, APP_RTC_TIMEOUT_1S * t, RTC_SnsSlotTimer);
 }
 
 /*void TaskManager()
@@ -671,7 +688,7 @@ int main(void)
   UARTComm_init(false);                         // Initialize UART communication
   print_header();
   printf("\r\n\n\nWake Up!\r\n");                   // Send wake-up message
-  SetTimer(&rtc_tick_timer, 100, RTC_App_IRQHandler);
+//  SetTimer(&rtc_tick_timer, 100, RTC_App_IRQHandler);
   if (ALLOW_SLEEP) SMTM_Init();                 // Initialize sleep manager if allowed
 
   // NonBlockingDelay_Init

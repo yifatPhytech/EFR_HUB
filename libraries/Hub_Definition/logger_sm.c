@@ -198,7 +198,7 @@ LoggerState GetNextMission(bool bPrevMissionOK)
           }
 //      else
 //        g_wCurMode = MODE_SLEEPING;
-  return LOGGER_STATE_SLEEP;
+  return LOGGER_STATE_DEINIT;// LOGGER_STATE_SLEEP;
 }
 
 void sendMeasurementsToLogger()
@@ -247,7 +247,7 @@ LoggerState handleError()
 //                RTCDRV_Delay(5000);
         }
         SetCurrentMode(MODE_SLEEPING);
-        return LOGGER_STATE_SLEEP;
+        return LOGGER_STATE_DEINIT; // LOGGER_STATE_SLEEP;
       }
       if (g_nRetryCnt < MAX_SEND_RETRY)
         {
