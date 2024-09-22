@@ -147,7 +147,7 @@ bool ParseSensorMsg()
         // only for installation (HUB & SENSORS)- delay ack according to RSSI
         if (GetCurrentMode() == MODE_INSTALLATION)
         {
-          if (msgIn.Header.m_Header == HEADER_SEN_PRM)
+//          if (msgIn.Header.m_Header == HEADER_SEN_PRM)  //todo - return
           {
             if (NewMsgStack[gReadStack].Rssi <= MIN_RSSI_4_ANSWER)
               return false;
@@ -198,10 +198,7 @@ bool ParseSensorMsg()
     switch (msgIn.Header.m_Header)
     {
     case HEADER_MSR_ONLY:
-//    case HEADER_MSR_ONLY_INT:
-//#ifndef VISHAY_SENSORS_ONLY
-//    case HEADER_MSR_URGENT:
-//#endif
+      printf("Standard measure msg");
       MySensorsArr[senIndex].msr = msgIn.DataHstPayload.m_data[0];
       MySensorsArr[senIndex].Status = SEN_STATUS_GOT_DATA;
       MySensorsArr[senIndex].IsNew = 0;

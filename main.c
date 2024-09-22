@@ -57,6 +57,8 @@ static bool       g_bHubRndSlot = false;
 static bool       g_bDataIn;
 volatile  uint16_t  g_nCurTimeSlot;
 static bool     g_bflagWakeup;
+static bool g_bflagWakeupLsn = false;
+static bool g_bflagWakeupSnd = false;
 static bool g_bSlotTimerInt = false;
 static  uint8_t   g_nHubSlot;
 static  bool    g_bRadioStateOpen;
@@ -249,8 +251,9 @@ void RTC_HubSlotTimer()
 {
   g_nCurTimeSlot = CalcHubSlot();
   StopTimer(&rtcHubLgrTimer);
-  InitLoggerSM();
+//  InitLoggerSM();
   g_bflagWakeup = true;
+  g_bflagWakeupSnd = true;
 }
 
 void RTC_SnsSlotTimer()
@@ -259,18 +262,19 @@ void RTC_SnsSlotTimer()
   StopTimer(&rtcHubLgrTimer);
 //  InitSensorSM();
   g_bflagWakeup = true;
+  g_bflagWakeupLsn = true;
 }
 
 void RadioOn()
 {
   if (g_bRadioStateOpen == true)
      return;
-  printf("wakeup Radio\n");
- init_tcxo();
-//  sl_stack_init();                                      // Initialize Silicon Labs RADIO components
-//  rail_handle = Initialize_RADIO();                     // Initialize the radio
-  set_radio_to_wakeup_mode();
-  set_radio_to_rx_mode(rail_handle);
+  printf("wake-up Radio\n");
+// init_tcxo();
+////  sl_stack_init();                                      // Initialize Silicon Labs RADIO components
+////  rail_handle = Initialize_RADIO();                     // Initialize the radio
+//  set_radio_to_wakeup_mode();
+//  set_radio_to_rx_mode(rail_handle);
   g_bRadioStateOpen = true;
 }
 
@@ -279,8 +283,8 @@ void RadioOff()
   if (g_bRadioStateOpen == false)
     return;
   printf("RadioOff\n");
-  set_radio_to_sleep_mode();
-  disable_tcxo();
+//  set_radio_to_sleep_mode();
+//  disable_tcxo();
   g_bRadioStateOpen = false;
 }
 
@@ -326,7 +330,7 @@ void GoToSleep()
   g_bflagWakeup = false;
   if (GetCurrentMode() == MODE_SLEEPING)
     DeepSleep();
-  sl_sleeptimer_delay_millisecond(1000);
+  sl_sleeptimer_delay_millisecond(100);
   while (g_bflagWakeup == false)
     EMU_EnterEM2(true);
 }
@@ -488,14 +492,14 @@ uint32_t CalcTimeToSnsSlot()
 void SetTimer4Logger()
 {
   uint32_t t = CalcTimeToHubSlot();
-  printf("set timer to wu in %lu seconds\n", t);
+  printf("set timer to wu for sending %lu seconds\n", t);
   SetTimer(&rtcHubLgrTimer, APP_RTC_TIMEOUT_1S * t, RTC_HubSlotTimer);
 }
 
 void SetTimer4Sensors()
 {
   uint32_t t = CalcTimeToSnsSlot();
-  printf("set timer to wu in %lu seconds\n", t);
+  printf("set timer to wu for listening in %lu seconds\n", t);
   SetTimer(&rtcHubLgrTimer, APP_RTC_TIMEOUT_1S * t, RTC_SnsSlotTimer);
 }
 
@@ -603,11 +607,27 @@ void SetTimer4Sensors()
 }*/
 void HandleSlotTimer()
 {
+  if (g_bSlotTimerInt)
+    g_nCurTimeSlot++;
   g_bSlotTimerInt = false;
-  g_nCurTimeSlot++;
+  if (g_bflagWakeupLsn)
+    {
+    g_nCurTimeSlot = 0;
+//    InitSensorSM();
+    Set10SecTimer();
+    g_bflagWakeupLsn = false;
+    }
+  if (g_bflagWakeupSnd)
+    {
+      g_nCurTimeSlot = CalcHubSlot();
+      InitLoggerSM();
+      g_bflagWakeupSnd = false;
+      return;
+    }
+
   if (g_nCurTimeSlot >= MAX_SLOT)
     g_nCurTimeSlot = 0;
-  printf("current slot: %d\n", g_nCurTimeSlot);
+  printf("wake up! current slot: %d\n", g_nCurTimeSlot);
   if  (GetCurrentMode() == MODE_INSTALLATION)
    {
      if (g_instlCycleCnt >= 1)
@@ -623,7 +643,7 @@ void HandleSlotTimer()
      }
    }
    else
-     {
+   {
        if (g_nCurTimeSlot >= 60)
          {
            Stop10SecTimer();
@@ -643,6 +663,7 @@ void HandleSlotTimer()
 
 int main(void)
 {
+  CHIP_Init();
   // #TODO Note: Current implementation of disabling TCXO causes the microcontroller to hang
   // #TODO Note: Search for 'UART FLUSH' command.
   // #TODO Note: EFR FOTA
@@ -713,9 +734,12 @@ int main(void)
       if (g_bflagWakeup)
         {
           g_bflagWakeup = false;
-          if (g_bSlotTimerInt)
+//          if (g_bSlotTimerInt)
             {
               HandleSlotTimer();
+              PrintCurrentSnsState();
+              PrintCurrentLgrState();
+
             }
 //          SetTimer(&rtc_tick_timer, 100, RTC_App_IRQHandler);
         }

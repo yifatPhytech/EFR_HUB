@@ -68,7 +68,7 @@ bool SaveNewPacket(uint8_t* radioRxPkt, uint16_t packet_length, int16_t nRssi)
       memcpy(&NewMsgStack[gWriteStack].Buffer, radioRxPkt, packet_length);
 //      for (int8_t i = 0; i <= radioRxPkt[0]+1; i++)
 //        NewMsgStack[gWriteStack].Buffer[i] = radioRxPkt[i];
-      NewMsgStack[gWriteStack].Rssi = nRssi;
+      NewMsgStack[gWriteStack].Rssi = 85; //nRssi; //todo - back to nRssi
       NewMsgStack[gWriteStack].Status = CELL_BUSY;
       return true;
 }

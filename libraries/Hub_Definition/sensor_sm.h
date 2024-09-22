@@ -5,4 +5,6 @@ void SensorStateMachine();
 void InitSensorSM();
 bool IsSnsSmSleep();
 bool ShouldListen();
+void PrintCurrentSnsState();
+
 #endif

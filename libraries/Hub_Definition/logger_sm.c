@@ -31,7 +31,7 @@
 //#define POWER_OUT_127 3 //127 //  20dbm
 
 #define FAIL_BEFORE_BC      3
-#define INSTALLATION_CYCLES   360 //((uint16_t)MAX_SLOT)  //20
+#define INSTALLATION_CYCLES   360
 
 // Define states
 typedef enum {
@@ -72,6 +72,11 @@ static const char *GetLoggerStateName(LoggerState state)
   };
 
   return loggerStateNames[state];
+}
+
+void PrintCurrentLgrState()
+{
+  GetLoggerStateName(currentState);
 }
 
 static const char *GetMessageTypeName(SendMsgType msgType)
@@ -120,6 +125,7 @@ void InitLoggerSM()
   uint32_t interval = 500;
 //  g_wCurMode = MODE_SENDING;
 //  g_nCurTask = TASK_BUILD_MSG;
+  printf("IOnit logger sm");
   g_msgType = MSG_DATA;
   g_nRetryCnt = 0;
 //  g_nMaxRetryCnt = 0;
@@ -355,6 +361,7 @@ void LoggerStateMachine()
             {
               SetCurrentMode(MODE_INSTALLATION);
               InitSensorSM();
+              Set10SecTimer();
               currentState = LOGGER_STATE_SLEEP;
             }
           break;

@@ -61,6 +61,11 @@ const char* sensorStateToString(SensorState state) {
     }
 }
 
+void PrintCurrentSnsState()
+{
+  sensorStateToString(currentSnsState);
+}
+
 bool IsBusySlotOrNeighbor(uint16_t slot, bool bCheckNeighbor)
 {
   uint64_t temp;
@@ -187,7 +192,6 @@ void handleSnsError()
 void InitSensorSM()
 {
   currentSnsState = SENSOR_STATE_LISTEN;
-  Set10SecTimer();
   printf("start sensors sm\n");
 //    SetCurrentMode(MODE_INSTALLATION);  // g_wCurMode = ;
 //  SetTicksCnt( SLOT_INTERVAL_SEC * APP_RTC_FREQ_HZ);
