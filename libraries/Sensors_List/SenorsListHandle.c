@@ -1,10 +1,11 @@
+#include <stdio.h>
 
 #include "libraries/Sensors_List/SenorsListHandle.h"
+
 #include "libraries/Hub_Definition/hub_define.h"
 #include "libraries/flash_storage/flash_storage.h"
 #include "libraries/Sensors_List/slot_Handle.h"
 
-#define SENSOR_BASIC_FLASH_ADDRESS 0x08070000 //0x08000000  //
 
 
 //IDStruct myData;
@@ -16,12 +17,24 @@ void writeAllSnsToFlash(void)
 {
     uint32_t len = sizeof(AllSns);
     writeFlash_ucharArray(SENSOR_BASIC_FLASH_ADDRESS, (unsigned char*)AllSns, len);
+//    for (uint8_t i = 0; i < 1; i++)
+//    {
+//        printf("write AllSns[%d] = %lu\n", i, AllSns[i].snsID);
+//        writeFlash_uint32(SENSOR_BASIC_FLASH_ADDRESS+(i*5), AllSns[i].snsID);
+//        writeFlash_uint8(SENSOR_BASIC_FLASH_ADDRESS+(i*5+4), AllSns[i].slot);
+//    }
 }
 
 void readAllSnsFromFlash(void)
 {
     uint32_t len = sizeof(AllSns);
     readFlash_ucharArray(SENSOR_BASIC_FLASH_ADDRESS, (unsigned char*)AllSns, len);
+//    for (uint8_t i = 0; i < 1; i++)
+//    {
+//        AllSns[i].snsID = readFlash_uint32(SENSOR_BASIC_FLASH_ADDRESS+(i*5));
+//        AllSns[i].slot = readFlash_uint8(SENSOR_BASIC_FLASH_ADDRESS+(i*5+4));
+//        printf("read AllSns[%d] = %lu\n", i, AllSns[i].snsID);
+//    }
 }
 
 void ResetAllSns()
@@ -31,7 +44,6 @@ void ResetAllSns()
   AllSns[i].snsID = 0;
   AllSns[i].slot = 0;
     }
-  printf("write to flash");
   writeAllSnsToFlash();
 }
 
@@ -84,7 +96,7 @@ void InitSnsParams()
 
 void InitSensorArray()
 {
-  uint8_t i, j, k;
+  uint8_t i, j;//, k;
   readAllSnsFromFlash();
   g_lMySlots = 0;
   // if cant load from nvm - init all
@@ -109,7 +121,7 @@ void InitSensorArray()
     MySensorsArr[i].msr = NO_DATA;
     for (j = 0; j < MAX_HSTR_CNT; j++)
       MySensorsArr[i].HstrData[j] = NO_DATA;
-    printf("\r\nsensor %d at index %d slot %d\r\n" ,MySensorsArr[i].ID, i, MySensorsArr[i].slot.index);
+    printf("sensor %d at index %d slot %d\r\n" ,MySensorsArr[i].ID, i, MySensorsArr[i].slot.index);
     if (AllSns[i].slot != 0)
     {
       uint64_t n = (uint64_t)1 << AllSns[i].slot;
@@ -126,9 +138,9 @@ void InitSensorArray()
 //        MultySensorArr[i].HstrData[j][k] = NO_DATA;
 //    }
 //  }
-#ifdef DEBUG_MODE
-  logd("g_lMySlots = %l - %l - %l", (uint16_t)(g_lMySlots >> 32),(uint16_t)(g_lMySlots >> 16), (uint16_t)g_lMySlots);
-#endif
+
+  printf("g_lMySlots = %l - %l - %l\n", (uint16_t)(g_lMySlots >> 32),(uint16_t)(g_lMySlots >> 16), (uint16_t)g_lMySlots);
+
 }
 
 uint8_t GetSensorIndex(uint32_t senID)
@@ -171,6 +183,7 @@ int8_t InsertNewSensor(uint32_t senID,uint8_t senType, bool bMulti)
 {
   uint8_t nSlot, j, i = 0, startIndex, lastIndex;
   bool bFoundEmpty = false;
+  printf("insert new sensor\n");
 
 //  if ((IsMulySnsrProb(senType) == true) || (bMulti))
 //  {
@@ -179,7 +192,7 @@ int8_t InsertNewSensor(uint32_t senID,uint8_t senType, bool bMulti)
 //  }
 //  else
   {
-    startIndex = 5;
+    startIndex = 0;
     lastIndex = MAX_DATA;
   }
   i = startIndex;

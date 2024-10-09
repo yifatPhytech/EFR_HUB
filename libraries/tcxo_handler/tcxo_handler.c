@@ -15,29 +15,45 @@
 #include <rail.h>
 
 
-static void switchToRcClock(void);
+//static void switchToRcClock(void);
 
 // Switch to the internal RC clock
-static void switchToRcClock(void)
+ void switchToRcClock(void)
 {
   // HFRCODPLL refers to a High Frequency RC Oscillator with a Digitally Controlled PLL (Phase-Locked Loop).
   // This type of oscillator provides a stable high-frequency clock that can be used for CPU operation
   // and other high-speed peripherals. The digitally controlled PLL allows for frequency stabilization
   // and adjustment, making it a flexible clock source that can be fine-tuned for precise clock management.
   // Enable HFRCODPLL and wait for it to be ready
-  CMU_OscillatorEnable(cmuOsc_HFRCODPLL, true, true);
+  CMU_OscillatorEnable(cmuOsc_FSRCO, true, true); // cmuOsc_HFRCODPLL
 
   // After enabling the HFRCODPLL, we switch the system clock source to it.
   // The system clock (SYSCLK) is the primary clock from which the CPU and peripheral clocks are derived.
   // Switching to HFRCODPLL for SYSCLK generally improves the energy efficiency of the system
   // while providing a reliable clock source for high-performance operation.
-  CMU_ClockSelectSet(cmuClock_SYSCLK, cmuSelect_HFRCODPLL);
+  CMU_ClockSelectSet(cmuClock_SYSCLK, cmuSelect_FSRCO); //cmuSelect_HFRCODPLL
 
   // The HFXO is a High Frequency Crystal Oscillator that provides a precise and stable clock source,
   // but it consumes more power compared to the HFRCODPLL. Disabling the HFXO when it's not needed
   // saves power, which is particularly important in battery-operated or energy-sensitive applications.
   // Disable HFXO as it's no longer needed
   CMU_OscillatorEnable(cmuOsc_HFXO, false, false);
+}
+
+void switchToTcxoClock(void)
+{
+    // First, enable the HFXO (High Frequency Crystal Oscillator).
+    // This ensures that the external TCXO clock is ready before we switch the system clock to it.
+    CMU_OscillatorEnable(cmuOsc_HFXO, true, true);
+
+    // Optionally, wait until HFXO is ready if your hardware requires it
+    // You can check the status or wait in a loop until the oscillator is stable.
+
+    // Switch the system clock source to HFXO.
+    CMU_ClockSelectSet(cmuClock_SYSCLK, cmuSelect_HFXO);
+
+    // Optionally disable the HFRCODPLL since it's no longer needed.
+    CMU_OscillatorEnable(cmuOsc_HFRCODPLL, false, false);
 }
 
 void init_tcxo(void)
@@ -52,6 +68,7 @@ void init_tcxo(void)
 
   // Set PA0 pin to activate the radio TCXO
   GPIO_PinOutSet(gpioPortA, 0);
+
 }
 
 void enable_tcxo(void)
@@ -62,8 +79,9 @@ void enable_tcxo(void)
   GPIO_PinOutSet(gpioPortA, 0);
 
   // TCXO stabilization time is ~5 milliseconds.
-  //sl_sleeptimer_delay_millisecond(5);
+  sl_sleeptimer_delay_millisecond(5);
 
+  switchToTcxoClock();
   //CMU_OscillatorEnable(cmuOsc_HFXO, true, true); // Enable HFXO
 }
 
@@ -88,7 +106,7 @@ void disable_tcxo(void)
   // Switch the system clock to the internal RC clock before disabling TCXO
 
   // Delay for a certain period if required
-  //sl_sleeptimer_delay_millisecond(5);
+  sl_sleeptimer_delay_millisecond(5);
 
   // Clear PA0 pin to deactivate the radio TCXO
   GPIO_PinOutClear(gpioPortA, 0);

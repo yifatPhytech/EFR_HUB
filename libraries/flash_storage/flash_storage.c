@@ -13,20 +13,25 @@
 #include "em_device.h"
 #include "em_chip.h"
 #include "em_msc.h"
+#include <stdio.h>
 
 /**
  * Write a 32-bit value to a specified flash address.
  * @param flashAddress - Address to write to
  * @param value - 32-bit value to write
  */
-void writeFlash_uint32(uint32_t flashAddress, uint32_t value)
+MSC_Status_TypeDef writeFlash_uint32(uint32_t flashAddress, uint32_t value)
 {
   uint32_t *address = (uint32_t *)flashAddress;
+  MSC_Status_TypeDef res = mscReturnOk;
 
   MSC_Init();                                 // Initialize the Memory System Controller
-  MSC_ErasePage(address);                     // Erase the target flash page
-  MSC_WriteWord(address, &value, sizeof(value));  // Write the 32-bit value to flash
-  MSC_Deinit();                               // De-initialize the Memory System Controller
+  res = MSC_ErasePage(address);                     // Erase the target flash page
+  if (res == mscReturnOk)
+    res = MSC_WriteWord(address, &value, sizeof(value));   // Write the 32-bit value to flash
+  MSC_Deinit();     // De-initialize the Memory System Controller
+  printf("writeFlash_uint32 return %d\n", res);
+  return res;
 }
 
 /**
@@ -86,12 +91,12 @@ void writeFlash_ucharArray(uint32_t flashAddress, unsigned char* data, uint32_t 
   uint32_t *address = (uint32_t *)flashAddress;
 
   MSC_Init();                                 // Initialize the Memory System Controller
+  MSC_ErasePage(address); // Erase the 32-bit chunk in flash
 
   // Assuming len is a multiple of 4 for simplicity,
   // can be enhanced for non-multiple lengths
   for (uint32_t i = 0; i < len; i += 4)
     {
-      MSC_ErasePage(address + (i/4)); // Erase the 32-bit chunk in flash
       MSC_WriteWord(address + (i/4), &data[i], sizeof(uint32_t)); // Write 4 bytes at a time
     }
 

@@ -147,7 +147,7 @@ bool ParseSensorMsg()
         // only for installation (HUB & SENSORS)- delay ack according to RSSI
         if (GetCurrentMode() == MODE_INSTALLATION)
         {
-//          if (msgIn.Header.m_Header == HEADER_SEN_PRM)  //todo - return
+          if (msgIn.Header.m_Header == HEADER_SEN_PRM)  //todo - return
           {
             if (NewMsgStack[gReadStack].Rssi <= MIN_RSSI_4_ANSWER)
               return false;
@@ -160,22 +160,25 @@ bool ParseSensorMsg()
           }
         }
         else
+        {
           // if sensor in broadcast and rssi is lower than 60- do not answer
           if (msgIn.Header.m_addressee == DEFAULT_ID)
             if (NewMsgStack[gReadStack].Rssi <= MIN_RSSI_4_ANSWER)
+              {
+                printf("low rssi\n");
               return false;
-        bool bIsMulty = (msgIn.Header.m_Header == HEADER_MSR_MLT_ONLY)? true: false;
+              }
+        }
+//        bool bIsMulty = (msgIn.Header.m_Header == HEADER_MSR_MLT_ONLY)? true: false;
         if (msgIn.Header.m_Header == HEADER_SEN_PRM)
-          senIndex = InsertNewSensor(msgIn.Header.m_ID, msgIn.PrmPayload.m_type, bIsMulty);
+          senIndex = InsertNewSensor(msgIn.Header.m_ID, msgIn.PrmPayload.m_type, false);
         else
-          senIndex = InsertNewSensor(msgIn.Header.m_ID, 0, bIsMulty);
-        //printf("senIndex = %d, slot status %d" , senIndex, MySensorsArr[senIndex].slot.status);
+          senIndex = InsertNewSensor(msgIn.Header.m_ID, 0, false);
+        printf("senIndex = %d, slot status %d" , senIndex, MySensorsArr[senIndex].slot.status);
 
         if (senIndex == -1) //MAX_DATA)
         {
-#ifdef DEBUG_MODE
           printf("not enough space for more sensor\n");
-#endif
         // cant insert this sensor
           return false;
         }

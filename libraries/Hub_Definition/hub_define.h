@@ -4,6 +4,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include "libraries/CommonHeaders/ProtocolDef.h"
+#include "libraries/NonBlockingDelay/NonBlockingDelay.h"
 
 #define DebugMode
 
@@ -17,7 +18,7 @@
 #define APP_RTC_TIMEOUT_1S (1000u)
 
 //#define MAX_HSTR_CNT  12  //5
-#define MAX_SLOT  360
+#define MAX_SLOT   360
 #define CELL_EMPTY  0
 #define CELL_BUSY 1
 
@@ -131,6 +132,8 @@ void SetCurrentMode(WorkingMode newMode);
 void SetTicksCnt(uint16_t ticks);
 void RadioOn();
 void SetTimer4Sensors();
+void RadioOff();
+
 
 
 extern uint32_t g_LoggerID;
@@ -150,5 +153,6 @@ extern uint16_t g_time2EndHubSlot;
 extern volatile uint8_t    g_nMin;
 extern volatile uint8_t    g_nSec;
 extern bool       g_bIsFirstRound;
+extern NonBlockingDelay led_interval_instance;               // NonBlockingDelay instance for LED toggle
 
 

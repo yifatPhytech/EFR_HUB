@@ -36,6 +36,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>    // for printf
+#include "libraries/Hub_Definition/hub_define.h"
 
 
 bool uart_decoder(const char *packet)
@@ -52,6 +53,17 @@ bool uart_decoder(const char *packet)
   if (strcmp(packet, "help") == 0)
     {
       usage_guide();
+      return true;
+    }
+  if (strcmp(packet, "S") == 0)
+    {
+      RadioOff();
+      return true;
+    }
+
+  if (strcmp(packet, "W") == 0)
+    {
+      RadioOn();
       return true;
     }
 

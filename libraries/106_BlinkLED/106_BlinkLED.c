@@ -8,7 +8,7 @@
 #include <libraries/106_BlinkLED/106_BlinkLED.h>
 #include "em_cmu.h"     // Clock management unit library
 
-bool ALLOW_BLINK = false;  // Global flag to control LED blinking
+bool ALLOW_BLINK = true;  // Global flag to control LED blinking
 
 // Initialize the LED pin
 void BlinkLED_init()

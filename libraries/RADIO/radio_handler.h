@@ -26,10 +26,10 @@ typedef enum
 } rf_power;
 
 static const int16_t tx_power_dbm[] = {
-    [POWER_OUT_0] = -10,
+    [POWER_OUT_0] = -100,
     [POWER_OUT_1] = 0,
-    [POWER_OUT_2] = 10,
-    [POWER_OUT_3] = 20};
+    [POWER_OUT_2] = 100,
+    [POWER_OUT_3] = 200};
 
 void app_process_action(RAIL_Handle_t rail_handle);
 void set_up_tx_fifo(RAIL_Handle_t rail_handle);

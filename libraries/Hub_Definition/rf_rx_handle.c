@@ -57,6 +57,7 @@ bool IsNewRxData()
 bool SaveNewPacket(uint8_t* radioRxPkt, uint16_t packet_length, int16_t nRssi)
 {
   uint8_t gWriteStack = GetFirstEmptyCell();
+  uint8_t r = (uint8_t)((nRssi / 2) + 260);
       if (gWriteStack == MAX_MSG_IN_STACK)
       {
         printf("doesn't have empty cell. missed msg\n");
@@ -64,11 +65,12 @@ bool SaveNewPacket(uint8_t* radioRxPkt, uint16_t packet_length, int16_t nRssi)
       }
       if (packet_length > MAX_EZR_BUFFER_SIZE)
         return false;
-      printf("save packet at index %d RSSI: %d\n", gWriteStack, nRssi);
+      printf("save packet at index %d dBm: %d RSSI: %d\n", gWriteStack, nRssi, r);
+
       memcpy(&NewMsgStack[gWriteStack].Buffer, radioRxPkt, packet_length);
 //      for (int8_t i = 0; i <= radioRxPkt[0]+1; i++)
 //        NewMsgStack[gWriteStack].Buffer[i] = radioRxPkt[i];
-      NewMsgStack[gWriteStack].Rssi = 85; //nRssi; //todo - back to nRssi
+      NewMsgStack[gWriteStack].Rssi = r;
       NewMsgStack[gWriteStack].Status = CELL_BUSY;
       return true;
 }

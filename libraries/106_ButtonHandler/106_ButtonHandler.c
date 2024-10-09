@@ -9,6 +9,8 @@
 #include <em_gpio.h>                                          // GPIO library
 #include <libraries/106_BlinkLED/106_BlinkLED.h>
 #include <libraries/106_ButtonHandler/106_ButtonHandler.h>
+#include "libraries/I2C/I2C.h"
+
 #include <stdio.h>
 
 // Button pin and port definitions
@@ -68,7 +70,19 @@ void sl_button_on_change(const sl_button_t *handle)
 bool Read_ON_OFF_Button(void)
 {
   // Read the ON/OFF button state
-  bool buttonState = GPIO_PinInGet(ON_OFF_BUTTON_PORT, ON_OFF_BUTTON_PIN);
+  bool buttonState = false;// = GPIO_PinInGet(ON_OFF_BUTTON_PORT, ON_OFF_BUTTON_PIN);
+  uint8_t data[7];
+  uint8_t cmd[3] = {0xAA, 0x00, 0x00}; // Command to read the sensor
+
+  // Send the command to the sensor
+  if (!I2C_Write(0x28, cmd, sizeof(cmd)))
+    return false; // I2C write failed
+
+  // Now that EOC is high, read the response from the sensor
+  if (!I2C_Read(0x28, data, sizeof(data)))
+    return false; // I2C read failed
+
+
 
   // If the button is pressed, update flags and return true
   if (buttonState == 0) // Button pressed

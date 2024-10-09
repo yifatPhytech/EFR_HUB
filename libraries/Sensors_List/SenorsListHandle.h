@@ -6,6 +6,7 @@
 
 #define MAX_DATA  40
 #define NO_DATA   -9999
+#define SENSOR_BASIC_FLASH_ADDRESS 0x08055000
 
 typedef struct
 {

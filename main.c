@@ -5,9 +5,10 @@
 #include <libraries/106_ButtonHandler/106_ButtonHandler.h>
 #include "sl_system_process_action.h"
 #include "sl_component_catalog.h"
-#include "sl_power_manager.h"
+//#include "sl_power_manager.h"
 #include "sl_event_handler.h"
 #include "sl_system_init.h"
+#include "sl_board_control.h"
 #include "libraries/SleepModeTimestampManager/SleepModeTimestampManager.h"
 #include "libraries/sensor_processing/sensor_processing.h"
 #include "libraries/phytech_protocol/phytech_protocol.h"
@@ -61,7 +62,7 @@ static bool g_bflagWakeupLsn = false;
 static bool g_bflagWakeupSnd = false;
 static bool g_bSlotTimerInt = false;
 static  uint8_t   g_nHubSlot;
-static  bool    g_bRadioStateOpen;
+static  bool    g_bRadioStateOpen = false;
 
 //static int8_t     gReadStack = 0;
 //static int8_t     gWriteStack = 0;
@@ -87,7 +88,7 @@ uint32_t g_LoggerID = DEFAULT_ID;
 // NonBlockingDelay instances
 NonBlockingDelay led_interval_instance;               // NonBlockingDelay instance for LED toggle
 //NonBlockingDelay rtc_tick_instance;               // NonBlockingDelay instance for sensor check
-NonBlockingDelay sleepInstance;                       // NonBlockingDelay instance before sleep
+//NonBlockingDelay sleepInstance;                       // NonBlockingDelay instance before sleep
 
 void print_header()
 {
@@ -258,6 +259,7 @@ void RTC_HubSlotTimer()
 
 void RTC_SnsSlotTimer()
 {
+  BlinkLED_onLED0();
   g_nCurTimeSlot = 0;
   StopTimer(&rtcHubLgrTimer);
 //  InitSensorSM();
@@ -270,11 +272,9 @@ void RadioOn()
   if (g_bRadioStateOpen == true)
      return;
   printf("wake-up Radio\n");
-// init_tcxo();
-////  sl_stack_init();                                      // Initialize Silicon Labs RADIO components
-////  rail_handle = Initialize_RADIO();                     // Initialize the radio
-//  set_radio_to_wakeup_mode();
-//  set_radio_to_rx_mode(rail_handle);
+  sl_sleeptimer_delay_millisecond(1);
+  set_radio_to_wakeup_mode();
+  set_radio_to_rx_mode(rail_handle);
   g_bRadioStateOpen = true;
 }
 
@@ -283,8 +283,8 @@ void RadioOff()
   if (g_bRadioStateOpen == false)
     return;
   printf("RadioOff\n");
-//  set_radio_to_sleep_mode();
-//  disable_tcxo();
+  set_radio_to_sleep_mode(rail_handle);
+
   g_bRadioStateOpen = false;
 }
 
@@ -301,11 +301,33 @@ void RadioOff()
 //  return true;
 //}
 
+
+SL_WEAK void EMU_EM23PresleepHook(void)
+{
+//  disable_tcxo();
+  CMU_ClockSelectSet(cmuClock_SYSCLK, cmuSelect_FSRCO);
+  sl_board_disable_oscillator(SL_BOARD_OSCILLATOR_TCXO);
+
+}
+
+SL_WEAK void EMU_EM23PostsleepHook(void)
+{
+//  enable_tcxo();
+  sl_board_enable_oscillator(SL_BOARD_OSCILLATOR_TCXO);
+
+//  USTIMER_Init();
+//  USTIMER_Delay(250);
+//  USTIMER_DeInit();
+  sl_sleeptimer_delay_millisecond(1);
+  CMU_ClockSelectSet(cmuClock_SYSCLK, cmuSelect_HFXO);
+
+}
 void DeepSleep()
 {
   printf("DeepSleep\n");
-  StopTimer(&rtc10SecTimer);
-  StopTimer(&rtcHubLgrTimer);
+//  StopTimer(&rtc10SecTimer);
+//  StopTimer(&rtcHubLgrTimer);
+  sl_sleeptimer_delay_millisecond(10);
   while (g_bflagWakeup == false)
     EMU_EnterEM2(true);
 }
@@ -315,24 +337,16 @@ void GoToSleep()
   printf("GoToSleep\n");
 //  StopTimer(&rtc_tick_timer);
   ResetAll();
-//  if (RTCDRV_IsRunning(rtc10SecTimer, &bTimerRun) == ECODE_EMDRV_RTCDRV_OK) //todo add
-//    if (bTimerRun == false)
-//      if (ECODE_EMDRV_RTCDRV_OK
-//          != RTCDRV_StartTimer(rtc10SecTimer, rtcdrvTimerTypePeriodic, APP_RTC_TIMEOUT_1S * SLOT_INTERVAL_SEC,
-//                     (RTCDRV_Callback_t)RTC_TimeSlot, NULL) )
-//        {
-//          printf("\r\nfailed to set slots timer");
-//        }
-//  RTCDRV_Delay(5);  //50
-
   BlinkLED_offLED0();
   RadioOff();
   g_bflagWakeup = false;
-  if (GetCurrentMode() == MODE_SLEEPING)
-    DeepSleep();
+//      if (GetCurrentMode() == MODE_SLEEPING)
+//        DeepSleep();
+
   sl_sleeptimer_delay_millisecond(100);
   while (g_bflagWakeup == false)
     EMU_EnterEM2(true);
+//  printf("wake up\n");
 }
 
 bool CanEnterSleep()
@@ -342,129 +356,6 @@ bool CanEnterSleep()
   return false;
 }
 
-/*void GetNextTask()
-{
-//  if (g_nMaxRetryCnt < g_nRetryCnt)
-//    g_nMaxRetryCnt = g_nRetryCnt;
-  if (IsNewRxData())//(g_bDataIn)
-  {
-    g_bDataIn = false;
-
-//    gReadStack =  GetFirstBusyCell();
-    if (ParseLoggerMsg() == true)
-    {
-      g_nRetryCnt = 0;
-//      g_nRfFail_cnt = 0;
-      printf("\r\nParse OK");
-      if (g_msgType == MSG_CONFIG)
-        g_nCurTask = TASK_BUILD_MSG;
-      else
-      if (g_bOnReset)
-      {
-        if (g_msgType == MSG_FW_UPDATE)
-        {
-            printf("\r\nshould start FW update");
-          g_wCurMode = MODE_WRITE_EEPROM;
-          rtcTickCnt = 20;
-        }
-        else
-        {
-          if (g_msgType == MSG_DATA)
-          {
-              printf("\r\nsend params");
-            g_msgType = MSG_HUB_PRM;
-            g_nCurTask = TASK_BUILD_MSG;
-            g_nRetryCnt = 0;
-          }
-          else
-          {
-            g_nCurTask = TASK_SYNC;
-            rtcTickCnt = SLOT_INTERVAL_SEC * APP_RTC_TIMEOUT_MS;
-            printf("\r\nstart sync");
-            BlinkLED_onLED0();
-//            g_bLedOn = TRUE;
-//            g_ledCnt = 10 * APP_RTC_FREQ_HZ;
-            return;
-          }
-        }
-      }
-      else
-      {
-        GetNextMission(true);
-      }
-    }
-    ResetAfterReadRow();
-//    NewMsgStack[gReadStack].Status = CELL_EMPTY;
-//    gReadStack = GetFirstBusyCell();
-  }
-  else
-    if (rtcTickCnt == 0)
-    {
-        printf("\r\ntimeout");
-      if (g_msgType == MSG_CONFIG)
-      {
-//        g_ledCnt = 0;
-        if (myData.m_ID > 0)
-        {
-          BlinkLED_offLED0();
-          sl_sleeptimer_delay_millisecond(5000);
-        }
-        g_wCurMode = MODE_SLEEPING;
-        return;
-      }
-//      if (appTxActive == true)  //todo
-//      {
-//        appTxActive = false;
-//        printf("\r\nreset fifo. ");
-//        ezradioResetTRxFifo();
-//      }
-
-      if (g_msgType == MSG_FW_UPDATE)
-      {
-          printf("\r\nno new FW to upadte");
-        g_msgType = MSG_DATA;
-        g_nCurTask = TASK_BUILD_MSG;
-        g_nRetryCnt = 0;
-        return;
-      }
-      if (g_nRetryCnt < MAX_SEND_RETRY)
-      {
-        g_nCurTask = TASK_BUILD_MSG;//TASK_SEND;
-//        g_time2StartSend = (myData.m_ID % 100)/ 2;
-//        if (g_nRetryCnt == 1)   //todo
-//          g_curLgrRfPwr = POWER_OUT_13;
-//        if (g_nRetryCnt > 1)
-//          g_curLgrRfPwr = POWER_OUT_127;
-
-//        ezr32hg_SetPA_PWR_LVL(g_curLgrRfPwr);
-      }
-      else
-        if (g_bOnReset)
-        {
-          g_wCurMode = MODE_SLEEPING;
-          return;
-        }
-        else
-        {
-//          g_nRfFail_cnt++;
-//          printf("\r\nreset fifo. g_nRfFail_cnt = %d", g_nRfFail_cnt);
-//          ezradioResetTRxFifo();
-          GetNextMission(false);  //todo
-//          if (g_wCurMode == MODE_SLEEPING)
-//            if (g_nRfFail_cnt >= FAIL_BEFORE_BC)//2)
-//            {
-//              g_nRfFail_cnt = 0;
-//              g_LoggerID = DEFAULT_ID;
-//              printf("\r\nreset radio. g_nRfFail_cnt = %d", g_nRfFail_cnt);
-////              ezradio_reset();
-////              ezradio_configuration_init(MY_Radio_Configuration_Data_Array);
-////              ezradioResetTRxFifo();
-////              ezradioStartRx(appRadioHandle);
-//            }
-        }
-    }
-}
-*/
 void Set10SecTimer()
 {
   SetTimer(&rtc10SecTimer, APP_RTC_TIMEOUT_1S * SLOT_INTERVAL_SEC, RTC_TimeSlot);
@@ -498,113 +389,11 @@ void SetTimer4Logger()
 
 void SetTimer4Sensors()
 {
-  uint32_t t = CalcTimeToSnsSlot();
+  uint32_t t = 100; //CalcTimeToSnsSlot();
   printf("set timer to wu for listening in %lu seconds\n", t);
   SetTimer(&rtcHubLgrTimer, APP_RTC_TIMEOUT_1S * t, RTC_SnsSlotTimer);
 }
 
-/*void TaskManager()
-{
-  if (g_bflagWakeup == true)
-  {
-    g_bflagWakeup = false;
-    if (g_bHubRndSlot == false)
-    {
-      HandleTimeSlot();
-      printf("\r\nSLOT: %d, MODE: %d, TASK: %d ",g_nCurTimeSlot ,g_wCurMode ,g_nCurTask);
-       if (g_nCurTimeSlot == (MAX_SLOT-1))
-        MoveData2Hstr();
-    }
-    else
-      g_bHubRndSlot = false;
-    if (g_wCurMode != MODE_SLEEPING)
-    {
-//      if (g_time2StartSend == 0)
-      RadioOn();
-      StartTickTimer();
-    }
-  }
-  switch (g_wCurMode)
-     {
-     case MODE_LISTENING:
-     case MODE_INSTALLATION:
-
-//     if (g_bDataIn)
-//         if ((appTxActive == true) && (rtcTickCnt > 0))//todo
-//           break;
-//       g_bDataIn = false;
-
-//       gReadStack = GetFirstBusyCell();
- //      do
- //      {
-       if (IsNewRxData())
-           {
-         if (ParseSensorMsg() == true)
-         {
-//           if  (g_wCurMode != MODE_INSTALLATION)
-//             DefineEzradio_PWR_LVL(NewMsgStack[gReadStack].Rssi); //todo
-           BufferEnvelopeTransmit();  //todo
-           rtcTickCnt = 3;
-         }
-         ResetAfterReadRow(); //NewMsgStack[gReadStack].Status = CELL_EMPTY;
-//         gReadStack = GetFirstBusyCell();
-//         if (gReadStack != MAX_MSG_IN_STACK)
-//           g_bDataIn = true;
- //      }
- //      while (gReadStack != MAX_MSG_IN_STACK);
-     }
-     else
-       if ((g_bMissionCompleted == true) && (rtcTickCnt == 0))
-         g_wCurMode = MODE_SLEEPING;
-
-     break;
-     case MODE_SENDING:
-       switch (g_nCurTask)
-       {
-       case TASK_BUILD_MSG:
-//         if (g_time2StartSend > 0)
-//           break;
-//         RadioOn();
-         BuildTx();
-         SetCurrentTask(TASK_SEND);
- #ifdef POWER_ON_RST
-         if ((g_bOnReset) && (g_msgType != MSG_CONFIG))
-           RTCDRV_Delay(5000);
- #endif
-       break;
-       case TASK_SEND:
-         BufferEnvelopeTransmit();  //todo
-         rtcTickCnt = 7;
-         if ((g_bOnReset) || (g_LoggerID == DEFAULT_ID))
-         {
-           rtcTickCnt = 25;
-         }
-//       if (g_msgType == MSG_CONFIG)
-//         rtcTickCnt = 50;
-//       SetCurrentTask(TASK_WAIT);
-
-       break;
-//       case TASK_WAIT:
-//         GetNextTask();
-//
-//       break;
-       case TASK_SYNC:
-         SyncClock();
-       break;
-       }
-       break;
-
-     case MODE_SLEEPING:
-//       if (appTxActive == true) //todo
-//         break;
-
-       GoToSleep();
-       break;
-     default:
-       printf("\r\ndont know what to do");
-       break;
-     } // SWITCH
-}*/
 void HandleSlotTimer()
 {
   if (g_bSlotTimerInt)
@@ -637,8 +426,6 @@ void HandleSlotTimer()
        if  (g_instlCycleCnt == 0)
         {
             SetCurrentMode(MODE_END_INSTALL);
-//           g_bOnReset = false;
-//           InitLoggerSM();
         }
      }
    }
@@ -663,29 +450,30 @@ void HandleSlotTimer()
 
 int main(void)
 {
-  CHIP_Init();
+//  CHIP_Init();
   // #TODO Note: Current implementation of disabling TCXO causes the microcontroller to hang
   // #TODO Note: Search for 'UART FLUSH' command.
   // #TODO Note: EFR FOTA
-  init_tcxo();                                       // Initialize the external TCXO
+  // Initialize Silicon Labs components
+  sl_system_init();
+
+//  init_tcxo();                                       // Initialize the external TCXO
 //  sensor_processing_init();                          // Initialize BURAM for sensor processing
   writeFlash_uint32(SENSOR_ID_FLASH_PAGE_ADDRESS, 1706210);
-//  ResetAllSns();
   // Load sensor parameters from flash into sensorInfo_t struct
   if (initialize_sensor_details())                                   // If the sensor details is valid we can switch to ACTIVE_MODE (sensorID, sensorType firmwareVersion)
     {
       setSystemMode(ACTIVE_MODE);
-      NonBlockingDelay_Init(&led_interval_instance, 1000);           // Initialize LED toggle delay
+//      NonBlockingDelay_Init(&led_interval_instance, 500);           // Initialize LED toggle delay
     }
   else
     setSystemMode(MONITOR_MODE);
+  NonBlockingDelay_Init(&led_interval_instance, 500);           // Initialize LED toggle delay
 
-  readAllSnsFromFlash();
+//  readAllSnsFromFlash();
   // Set system parameters by sensor type
-  setSystemParametersBySensorType(sensorDetails.sensorType);           // Set the system mode
+//  setSystemParametersBySensorType(sensorDetails.sensorType);           // Set the system mode
 
-  // Initialize Silicon Labs components
-  sl_system_init();
 
   // Handle sensor operation by sensor type
 //  is_hourly_or_explosive_message = handleOperationBySensorType(sensorDetails.sensorType);
@@ -693,6 +481,7 @@ int main(void)
     {
       sl_stack_init();                                      // Initialize Silicon Labs RADIO components
       rail_handle = Initialize_RADIO();                     // Initialize the radio
+//      g_bRadioStateOpen = true;
     }
 //  else
 //    {
@@ -705,17 +494,18 @@ int main(void)
   BlinkLED_init();                              // Initialize LED blinking functionality
   initADC();                                    // Initialize ADC library
   Initialize_I2C();                             // Initialize I2C library
-  ABP2_Init();                                  // Initialize ABP2 (Pressure I2C sensor)
+//  ABP2_Init();                                  // Initialize ABP2 (Pressure I2C sensor)
   UARTComm_init(false);                         // Initialize UART communication
   print_header();
   printf("\r\n\n\nWake Up!\r\n");                   // Send wake-up message
 //  SetTimer(&rtc_tick_timer, 100, RTC_App_IRQHandler);
-  if (ALLOW_SLEEP) SMTM_Init();                 // Initialize sleep manager if allowed
+//  if (ALLOW_SLEEP) SMTM_Init();                 // Initialize sleep manager if allowed
 
   // NonBlockingDelay_Init
-  NonBlockingDelay_Init(&led_interval_instance, 200);                // Initialize LED toggle delay
+//  NonBlockingDelay_Init(&led_interval_instance, 200);                // Initialize LED toggle delay
 //  NonBlockingDelay_Init(&rtc_tick_instance, 100);               // Initialize 100 ms tick timer
-  NonBlockingDelay_Init(&sleepInstance, SECONDS_BEFORE_SLEEP_AGAIN); // Initialize sleep delay
+//  NonBlockingDelay_Init(&sleepInstance, SECONDS_BEFORE_SLEEP_AGAIN); // Initialize sleep delay
+  ResetAllSns();
   InitSensorArray();
   InitSnsParams();
   SetCurrentMode(MODE_SENDING);
@@ -724,10 +514,11 @@ int main(void)
   InitLoggerSM();
   InitVarsOnReset();
   BlinkLED_onLED0();
+  NonBlockingDelay_reset(&led_interval_instance);
 
 //  WDOG_Enable(true);
   g_bDataIn = 0;
-
+  ALLOW_BLINK = true;
   while (1)
     {
       sl_system_process_action();               // Process Silicon Labs actions
@@ -739,18 +530,18 @@ int main(void)
               HandleSlotTimer();
               PrintCurrentSnsState();
               PrintCurrentLgrState();
-
             }
-//          SetTimer(&rtc_tick_timer, 100, RTC_App_IRQHandler);
         }
       switch (getSystemMode())
       {
         case ACTIVE_MODE:
           {
-            if (ALLOW_BLINK && (NonBlockingDelay_check(&led_interval_instance))) BlinkLED_toggleLED0();  // Toggle LED if delay met
+            if (ALLOW_BLINK && (NonBlockingDelay_check(&led_interval_instance)))
+              {
+                BlinkLED_toggleLED0();  // Toggle LED if delay met
+//                printf("toggle led\n");
+              }
             Read_ON_OFF_Button();
-//            TaskManager();
-//            rf_state_machine(rail_handle);    // Process RF state machine
             app_process_action(rail_handle);  // Process radio app actions
             SensorStateMachine();
             LoggerStateMachine();
@@ -781,9 +572,21 @@ int main(void)
 }
 
 
-void BURTC_IRQHandler(void)
-{
-  NonBlockingDelay_reset(&sleepInstance);   // reset sleepInstance
-  BURTC_IntClear(BURTC_IEN_COMP);
-  //SMTM_BURTC_IRQHandler();                // Call the DeepSleepManager's BURTC interrupt handler
-}
+//void BURTC_IRQHandler(void)
+//{
+//  NonBlockingDelay_reset(&sleepInstance);   // reset sleepInstance
+//  BURTC_IntClear(BURTC_IEN_COMP);
+//  //SMTM_BURTC_IRQHandler();                // Call the DeepSleepManager's BURTC interrupt handler
+//}
+
+/*
+ * 1. parse RSSI of package (SaveNewPacket)
+ * 2. handle radio sleep
+ * 3. read button as I2C instead of IO
+ * 4. add  set_radio_to_idle_mode function
+ * 5. use RAIL_SetTxPowerDbm to change RF power
+ * 6. fix bug in flash char * (writeFlash_ucharArray)
+ * 7. remove use of tcxo handler
+ * 8. use sl_sleeptimer_ms32_to_tick function in settimer function
+ *
+ */

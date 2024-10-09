@@ -31,7 +31,7 @@
 //#define POWER_OUT_127 3 //127 //  20dbm
 
 #define FAIL_BEFORE_BC      3
-#define INSTALLATION_CYCLES   360
+#define INSTALLATION_CYCLES   6  //360
 
 // Define states
 typedef enum {
@@ -125,7 +125,7 @@ void InitLoggerSM()
   uint32_t interval = 500;
 //  g_wCurMode = MODE_SENDING;
 //  g_nCurTask = TASK_BUILD_MSG;
-  printf("IOnit logger sm");
+  printf("Init logger sm\n");
   g_msgType = MSG_DATA;
   g_nRetryCnt = 0;
 //  g_nMaxRetryCnt = 0;
@@ -360,6 +360,8 @@ void LoggerStateMachine()
           if (SyncClock())
             {
               SetCurrentMode(MODE_INSTALLATION);
+              NonBlockingDelay_Init(&led_interval_instance, 2500);
+              NonBlockingDelay_reset(&led_interval_instance);
               InitSensorSM();
               Set10SecTimer();
               currentState = LOGGER_STATE_SLEEP;

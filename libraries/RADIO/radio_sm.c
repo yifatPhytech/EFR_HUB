@@ -122,8 +122,9 @@ void ChangeRfPower(RAIL_Handle_t rail_handle, rf_power pwr)
 {
   if (g_curRfPwr == pwr)
     return;
+
   g_curRfPwr = pwr;
-  RAIL_ConfigTxPower(rail_handle, tx_power_dbm[(uint8_t)pwr]);
+  RAIL_SetTxPowerDbm(rail_handle, tx_power_dbm[(uint8_t)pwr]);
   printf("\r\nset RF power to %d\n", g_curRfPwr);
 }
 
@@ -191,7 +192,7 @@ void app_process_action(RAIL_Handle_t rail_handle)
           {
             uint8_t *start_of_packet = 0;
             uint16_t packet_size = unpack_packet(rx_fifo, &packet_info, &start_of_packet);
-            nRSSI = RAIL_GetRssi(rail_handle, true);
+//            nRSSI = RAIL_GetRssiAlt(rail_handle, 100);//RAIL_GetRssi(rail_handle, true);
             rail_status = RAIL_ReleaseRxPacket(rail_handle, rx_packet_handle);
             if (rail_status != RAIL_STATUS_NO_ERROR)
               {

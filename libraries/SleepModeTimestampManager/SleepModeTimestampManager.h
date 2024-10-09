@@ -12,7 +12,7 @@
 #define LIBRARIES_SLEEPMODETIMESTAMPMANAGER_SLEEPMODETIMESTAMPMANAGER_H_
 
 // Include necessary headers
-#include "sl_power_manager.h"
+//#include "sl_power_manager.h"
 #include "em_device.h"
 
 /// ------------------ SleepModeTimestampManager Configuration ------------------

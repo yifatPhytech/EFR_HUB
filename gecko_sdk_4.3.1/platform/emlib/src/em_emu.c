@@ -39,6 +39,8 @@
 #include "em_core.h"
 #include "em_system.h"
 #include "em_ramfunc.h"
+#include "ustimer.h"
+#include "sl_board_control.h"
 
 #if defined(SL_CATALOG_METRIC_EM23_WAKE_PRESENT)
 #include "sli_metric_em23_wake.h"
@@ -809,6 +811,8 @@ void EMU_EM23Init(const EMU_EM23Init_TypeDef *em23Init)
  ******************************************************************************/
 SL_WEAK void EMU_EM23PresleepHook(void)
 {
+  CMU_ClockSelectSet(cmuClock_SYSCLK, cmuSelect_FSRCO);
+    sl_board_disable_oscillator(SL_BOARD_OSCILLATOR_TCXO);
 }
 
 /***************************************************************************//**
@@ -841,6 +845,12 @@ SL_WEAK void EMU_EFPEM23PresleepHook(void)
  ******************************************************************************/
 SL_WEAK void EMU_EM23PostsleepHook(void)
 {
+  sl_board_enable_oscillator(SL_BOARD_OSCILLATOR_TCXO);
+
+  USTIMER_Init();
+  USTIMER_Delay(250);
+  USTIMER_DeInit();
+  CMU_ClockSelectSet(cmuClock_SYSCLK, cmuSelect_HFXO);
 }
 
 /***************************************************************************//**
