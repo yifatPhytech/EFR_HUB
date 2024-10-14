@@ -269,3 +269,15 @@ void ResetAllSensorsData()
   }
   while (senIndex < MAX_DATA);
 }
+
+void SetSensorsDeltaUpdt()
+{
+  uint8_t i;
+  for (i = 0; i < MAX_DATA; i++)
+  {
+    if (MySensorsArr[i].ID != 0)
+    {
+      MySensorsArr[i].slotDelta2updt = true;
+    }
+  }
+}

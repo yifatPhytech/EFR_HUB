@@ -136,6 +136,7 @@ void SetTicksCnt(uint16_t ticks);
 void RadioOn();
 void SetTimer4Sensors();
 void RadioOff();
+uint32_t GetTimeLeft();
 
 
 

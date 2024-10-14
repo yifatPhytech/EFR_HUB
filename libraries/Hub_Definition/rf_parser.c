@@ -369,27 +369,28 @@ bool ParseLoggerMsg()
         printf("time: %d:%d\n", g_nMin, g_nSec);
         if ((!g_bOnReset) && (g_bIsFirstRound == true))
         {
-          uint8_t t = (100 - g_time2EndHubSlot) / 10; // calc seconds from hub slot started
+          g_time2EndHubSlot = GetTimeLeft();
+          uint8_t t = 100 - g_time2EndHubSlot; //(100 - g_time2EndHubSlot) / 10; // calc seconds from hub slot started
           int16_t dl = CalcDrift();
           printf("logger time: %d:%d. Sec from Slot started: %d drift: %d\n", g_nMin, g_nSec, t, dl);
-//          if ((dl > -10) && (dl < 0))     //todo
-//          {
-//            uint16_t t = g_time2EndHubSlot + (dl * 10);
-//            printf("set new timer: %d", t);
-//            // reset 10 sec timer
-//            Set10SecTimer();
-//          }
+          if ((dl > -10) && (dl < 0))
+          {
+            uint16_t t = g_time2EndHubSlot + (dl * 10);
+            printf("set new timer: %d", t);
+            // reset 10 sec timer
+            Set10SecTimer();
+          }
           // check if slot has drift in time
           uint16_t curSlot = (g_nMin * 60 + g_nSec - t) / SLOT_INTERVAL_SEC;
           if ((curSlot != g_nCurTimeSlot))
           {
             g_nDeltaOfSlots = g_nCurTimeSlot - curSlot; //
             printf("different between hub slot to rec slot of %d\n", g_nDeltaOfSlots);
-//            if ((g_nDeltaOfSlots != -1) && (g_nDeltaOfSlots != -2) && (g_nDeltaOfSlots != 1))   //todo
-//            {
-//              g_nCurTimeSlot = curSlot;
-//              SetSensorsDeltaUpdt();
-//            }
+            if ((g_nDeltaOfSlots != -1) && (g_nDeltaOfSlots != -2) && (g_nDeltaOfSlots != 1))   //todo
+            {
+              g_nCurTimeSlot = curSlot;
+              SetSensorsDeltaUpdt();
+            }
           }
         }
         // if it was broadcast - save the logger id and  HUBSLOT number

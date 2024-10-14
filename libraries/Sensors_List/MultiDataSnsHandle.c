@@ -80,7 +80,7 @@ bool SaveMultiData(uint32_t lID, PayloadMultiSenData_n_Hstr payload)
       return false;
   }
 
-  printf("parse data of multy sensor at multy index %d, history index: %d", multIndex, payload.m_nHstrIndex);
+  printf("parse data of multi sensor at multi index %d, history index: %d", multIndex, payload.m_nHstrIndex);
   for (uint8_t i = 0; i < payload.m_nDataCnt; i++)
     {
       if (payload.m_nHstrIndex == 0)

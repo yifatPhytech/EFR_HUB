@@ -35,6 +35,7 @@ void readAllSnsFromFlash(void);
 void ResetAllSensorsData();
 void ResetAllSns();
 void MoveData2Hstr();
+void SetSensorsDeltaUpdt();
 
 
 #endif

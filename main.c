@@ -320,6 +320,8 @@ void GoToSleep()
   sl_sleeptimer_delay_millisecond(10);
   while (g_bflagWakeup == false)
     EMU_EnterEM2(true);
+  EUSART_Enable(EUSART1, true);
+  EUSART1->CMD = EUSART_CMD_TXEN | EUSART_CMD_RXEN;
 //  printf("wake up\n");
 }
 
@@ -328,6 +330,15 @@ bool CanEnterSleep()
   if ((IsSnsSmSleep()) && (IsLgrSmSleep()))
       return true;
   return false;
+}
+
+uint32_t GetTimeLeft()
+{
+  uint32_t timeLeft, msLeft;
+  sl_sleeptimer_get_timer_time_remaining(&rtc10SecTimer, &timeLeft);
+  msLeft = sl_sleeptimer_tick_to_ms(timeLeft);
+  printf("time left to next 10 seconds timer is: %lu ms: %lu\n", timeLeft, msLeft);
+  return (msLeft/100);
 }
 
 void Set10SecTimer()
@@ -363,7 +374,7 @@ void SetTimer4Logger()
 
 void SetTimer4Sensors()
 {
-  uint32_t t = CalcTimeToSnsSlot();
+  uint32_t t = 60;//CalcTimeToSnsSlot();
   printf("set timer to wu for listening in %lu seconds\n", t);
   SetTimer(&rtcHubLgrTimer, APP_RTC_TIMEOUT_1S * t, RTC_SnsSlotTimer);
 }
