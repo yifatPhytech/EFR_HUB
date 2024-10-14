@@ -8,6 +8,9 @@
 
 #define DebugMode
 
+#define NO_DATA   -9999
+#define MAX_MULTI_SENSORS 5
+
 #define APP_RTC_FREQ_HZ 10u
 #define MAX_SEND_RETRY    4
 #define MAX_EZR_BUFFER_SIZE 64

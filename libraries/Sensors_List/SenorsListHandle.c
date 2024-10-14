@@ -5,6 +5,7 @@
 #include "libraries/Hub_Definition/hub_define.h"
 #include "libraries/flash_storage/flash_storage.h"
 #include "libraries/Sensors_List/slot_Handle.h"
+#include "libraries/Sensors_List/MultiDataSnsHandle.h"
 
 
 
@@ -17,24 +18,12 @@ void writeAllSnsToFlash(void)
 {
     uint32_t len = sizeof(AllSns);
     writeFlash_ucharArray(SENSOR_BASIC_FLASH_ADDRESS, (unsigned char*)AllSns, len);
-//    for (uint8_t i = 0; i < 1; i++)
-//    {
-//        printf("write AllSns[%d] = %lu\n", i, AllSns[i].snsID);
-//        writeFlash_uint32(SENSOR_BASIC_FLASH_ADDRESS+(i*5), AllSns[i].snsID);
-//        writeFlash_uint8(SENSOR_BASIC_FLASH_ADDRESS+(i*5+4), AllSns[i].slot);
-//    }
 }
 
 void readAllSnsFromFlash(void)
 {
     uint32_t len = sizeof(AllSns);
     readFlash_ucharArray(SENSOR_BASIC_FLASH_ADDRESS, (unsigned char*)AllSns, len);
-//    for (uint8_t i = 0; i < 1; i++)
-//    {
-//        AllSns[i].snsID = readFlash_uint32(SENSOR_BASIC_FLASH_ADDRESS+(i*5));
-//        AllSns[i].slot = readFlash_uint8(SENSOR_BASIC_FLASH_ADDRESS+(i*5+4));
-//        printf("read AllSns[%d] = %lu\n", i, AllSns[i].snsID);
-//    }
 }
 
 void ResetAllSns()
@@ -121,23 +110,14 @@ void InitSensorArray()
     MySensorsArr[i].msr = NO_DATA;
     for (j = 0; j < MAX_HSTR_CNT; j++)
       MySensorsArr[i].HstrData[j] = NO_DATA;
-    printf("sensor %d at index %d slot %d\r\n" ,MySensorsArr[i].ID, i, MySensorsArr[i].slot.index);
+    printf("sensor %d at index %d slot %d\n" ,MySensorsArr[i].ID, i, MySensorsArr[i].slot.index);
     if (AllSns[i].slot != 0)
     {
       uint64_t n = (uint64_t)1 << AllSns[i].slot;
       g_lMySlots |= n;
     }
   }
-//  for (i = 0; i < 5; i++)
-//  {
-//    MultySensorArr[i].ID = 0;
-//    for (j = 0; j < MAX_HSTR_CNT; j++)
-//    {
-//      MultySensorArr[i].msr[j] = NO_DATA;
-//      for (k = 0; k < 12; k++)
-//        MultySensorArr[i].HstrData[j][k] = NO_DATA;
-//    }
-//  }
+  ResetMultiArray();
 
   printf("g_lMySlots = %l - %l - %l\n", (uint16_t)(g_lMySlots >> 32),(uint16_t)(g_lMySlots >> 16), (uint16_t)g_lMySlots);
 
@@ -156,6 +136,37 @@ uint8_t GetSensorIndex(uint32_t senID)
   return MAX_DATA;
 }
 
+void MoveData2Hstr()
+{
+  printf("Move Data 2 Hstr\n");
+//logd("g_lMySlots = %l - %l - %l", (uint16_t)(g_lMySlots >> 32),(uint16_t)(g_lMySlots >> 16), (uint16_t)g_lMySlots);
+  uint8_t senIndex = 0, i;
+  do
+  {
+    senIndex = GetNextSensor(senIndex);
+    if (senIndex != MAX_DATA)
+    // if prev data hasnt sent to logger
+    {
+      // move all history data 1 step ahead
+      for (i = (MAX_HSTR_CNT - 1); i > 0; i--)
+      {
+        MySensorsArr[senIndex].HstrData[i] = MySensorsArr[senIndex].HstrData[(i-1)];
+      }
+      // copy current data to history data
+      MySensorsArr[senIndex].HstrData[0] = MySensorsArr[senIndex].msr;
+      //set default data
+      MySensorsArr[senIndex].msr = NO_DATA;
+      MySensorsArr[senIndex].Status = SEN_STATUS_CELL_EMPTY;
+      MySensorsArr[senIndex].IsNew++;
+  //#ifdef DEBUG_MODE
+      printf("%d: hours without connect: %d", MySensorsArr[senIndex].ID, MySensorsArr[senIndex].IsNew);
+//  #endif
+    }
+    senIndex++;
+}
+while (senIndex < MAX_DATA);
+}
+
 void RemoveSensor(uint8_t i)
 {
   uint64_t tmp;
@@ -165,12 +176,7 @@ void RemoveSensor(uint8_t i)
   MySensorsArr[i].DailyCnct = 0;
   MySensorsArr[i].slotDelta2updt = false;
   // if its SMP - remove sensor from multi table
-//  if (IsMultySensor(MySensorsArr[i].ID))
-//  {
-//    uint8_t n = GetMultySensorIndex(MySensorsArr[i].ID);
-//    if (n < 5)
-//      MultySensorArr[n].ID = 0;
-//  }
+  RemoveFromMultiSns(MySensorsArr[i].ID);
 
   tmp = ~((uint64_t)1 << MySensorsArr[i].slot.index);
   g_lMySlots &= tmp;
@@ -230,22 +236,10 @@ int8_t InsertNewSensor(uint32_t senID,uint8_t senType, bool bMulti)
     MySensorsArr[i].IsNew = 1;  //DataStatus |= EXTRA_STATUS_NEW;//
     MySensorsArr[i].version = 0;
     MySensorsArr[i].slotDelta2updt = false;
-//    if (IsMulySnsrProb(senType) == true)
-//    {
-//      j = 0;
-//      bFoundEmpty = false;
-//      do
-//      {
-//        if (MultySensorArr[j].ID == 0)
-//        {
-//          logd("insert sensor to index %d at multy data table", j);
-//          MultySensorArr[j].ID = senID;
-//          bFoundEmpty = true;
-//        }
-//        j++;
-//      }
-//      while ((j < 5) && (bFoundEmpty == false));
-//    }
+    if (IsMulySnsrProb(senType))
+    {
+        InsertNewMultiSns(senID);
+    }
     AllSns[i].snsID = senID;
     writeAllSnsToFlash();
     return i;

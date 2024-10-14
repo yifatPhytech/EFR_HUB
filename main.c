@@ -1,5 +1,5 @@
 #include "em_emu.h"
-
+#include "sli_em_cmu.h"
 #include <libraries/106_ADC/106_adc_reader.h>
 #include <libraries/106_BlinkLED/106_BlinkLED.h>
 #include <libraries/106_ButtonHandler/106_ButtonHandler.h>
@@ -15,7 +15,7 @@
 #include "libraries/NonBlockingDelay/NonBlockingDelay.h"
 #include "libraries/RADIO/rf_monitor_state_machine.h"
 #include "libraries/flash_storage/flash_storage.h"
-#include "libraries/tcxo_handler/tcxo_handler.h"
+//#include "libraries/tcxo_handler/tcxo_handler.h"
 #include "libraries/system_mode/system_mode.h"
 #include "libraries/RADIO/rf_state_machine.h"
 #include "libraries/RADIO/radio_handler.h"
@@ -223,11 +223,6 @@ void InitVarsOnReset()
   g_bRadioStateOpen = false;
 }
 
-void MoveData2Hstr()
-{
-
-}
-
 //void RTC_App_IRQHandler()   //100ms timer
 //{
 //  if (rtcTickCnt > 0)
@@ -250,7 +245,7 @@ uint8_t CalcHubSlot()
 
 void RTC_HubSlotTimer()
 {
-  g_nCurTimeSlot = CalcHubSlot();
+//  g_nCurTimeSlot = CalcHubSlot();
   StopTimer(&rtcHubLgrTimer);
 //  InitLoggerSM();
   g_bflagWakeup = true;
@@ -301,32 +296,11 @@ void RadioOff()
 //  return true;
 //}
 
-
-SL_WEAK void EMU_EM23PresleepHook(void)
-{
-//  disable_tcxo();
-  CMU_ClockSelectSet(cmuClock_SYSCLK, cmuSelect_FSRCO);
-  sl_board_disable_oscillator(SL_BOARD_OSCILLATOR_TCXO);
-
-}
-
-SL_WEAK void EMU_EM23PostsleepHook(void)
-{
-//  enable_tcxo();
-  sl_board_enable_oscillator(SL_BOARD_OSCILLATOR_TCXO);
-
-//  USTIMER_Init();
-//  USTIMER_Delay(250);
-//  USTIMER_DeInit();
-  sl_sleeptimer_delay_millisecond(1);
-  CMU_ClockSelectSet(cmuClock_SYSCLK, cmuSelect_HFXO);
-
-}
 void DeepSleep()
 {
   printf("DeepSleep\n");
-//  StopTimer(&rtc10SecTimer);
-//  StopTimer(&rtcHubLgrTimer);
+  StopTimer(&rtc10SecTimer);
+  StopTimer(&rtcHubLgrTimer);
   sl_sleeptimer_delay_millisecond(10);
   while (g_bflagWakeup == false)
     EMU_EnterEM2(true);
@@ -340,10 +314,10 @@ void GoToSleep()
   BlinkLED_offLED0();
   RadioOff();
   g_bflagWakeup = false;
-//      if (GetCurrentMode() == MODE_SLEEPING)
-//        DeepSleep();
+    if (GetCurrentMode() == MODE_SLEEPING)
+        DeepSleep();
 
-  sl_sleeptimer_delay_millisecond(100);
+  sl_sleeptimer_delay_millisecond(10);
   while (g_bflagWakeup == false)
     EMU_EnterEM2(true);
 //  printf("wake up\n");
@@ -370,9 +344,9 @@ void Stop10SecTimer()
 uint32_t CalcTimeToHubSlot()
 {
   uint8_t n = CalcHubSlot();
-  if (g_nCurTimeSlot <= g_nHubSlot)
-    return (g_nHubSlot - g_nCurTimeSlot) * 10;
-  return (MAX_SLOT - g_nCurTimeSlot + g_nHubSlot);
+  if (g_nCurTimeSlot <= n)
+    return (n - g_nCurTimeSlot) * 10;
+  return (MAX_SLOT - g_nCurTimeSlot + n);
 }
 
 uint32_t CalcTimeToSnsSlot()
@@ -389,7 +363,7 @@ void SetTimer4Logger()
 
 void SetTimer4Sensors()
 {
-  uint32_t t = 100; //CalcTimeToSnsSlot();
+  uint32_t t = CalcTimeToSnsSlot();
   printf("set timer to wu for listening in %lu seconds\n", t);
   SetTimer(&rtcHubLgrTimer, APP_RTC_TIMEOUT_1S * t, RTC_SnsSlotTimer);
 }
@@ -402,6 +376,7 @@ void HandleSlotTimer()
   if (g_bflagWakeupLsn)
     {
     g_nCurTimeSlot = 0;
+    MoveData2Hstr();
 //    InitSensorSM();
     Set10SecTimer();
     g_bflagWakeupLsn = false;
@@ -505,7 +480,7 @@ int main(void)
 //  NonBlockingDelay_Init(&led_interval_instance, 200);                // Initialize LED toggle delay
 //  NonBlockingDelay_Init(&rtc_tick_instance, 100);               // Initialize 100 ms tick timer
 //  NonBlockingDelay_Init(&sleepInstance, SECONDS_BEFORE_SLEEP_AGAIN); // Initialize sleep delay
-  ResetAllSns();
+//  ResetAllSns();
   InitSensorArray();
   InitSnsParams();
   SetCurrentMode(MODE_SENDING);

@@ -31,7 +31,7 @@
 //#define POWER_OUT_127 3 //127 //  20dbm
 
 #define FAIL_BEFORE_BC      3
-#define INSTALLATION_CYCLES   6  //360
+#define INSTALLATION_CYCLES   360
 
 // Define states
 typedef enum {

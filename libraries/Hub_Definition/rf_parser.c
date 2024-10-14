@@ -21,6 +21,7 @@
 #include "libraries/phytech_protocol/phytech_protocol.h"
 #include "libraries/Hub_Definition/logger_sm.h"
 #include "libraries/tools/tools.h"
+#include "libraries/Sensors_List/MultiDataSnsHandle.h"
 
 #define MIN_RSSI_4_ANSWER 60
 #define MIN_RSSI_4_DELAY  100
@@ -245,43 +246,15 @@ bool ParseSensorMsg()
     case HEADER_SEN_LOST:
       break;
     case HEADER_MSR_MLT_ONLY:
-/*      hstrIndex = msgIn.MultiDataPayload.m_nHstrIndex;
-      multIndex = GetMultySensorIndex(msgIn.Header.m_ID);
-      if (multIndex >= 5)
-      {
-        uint8_t j = 0;
-        do
-        {
-          if (MultySensorArr[j].ID == 0)
-          {
-//            printf("insert data to index %d at multy data table", j);
-            MultySensorArr[j].ID = msgIn.Header.m_ID;
-            multIndex = j;
-          }
-          j++;
-        }
-        while ((j < 5) && (multIndex >= 5));
+      if (SaveMultiData(msgIn.Header.m_ID, msgIn.MultiDataPayload) == false)
+        return false;
 
-        if (multIndex >= 5)
-          return false;
-      }
-
-      printf("parse data of multy sensor at multy index %d, history index: %d", multIndex, hstrIndex);
-
-      for (i = 0; i < msgIn.MultiDataPayload.m_nDataCnt; i++)
-      {
-        if (hstrIndex == 0)
-          MultySensorArr[multIndex].msr[i] = msgIn.MultiDataPayload.m_data[i];
-        else
-          MultySensorArr[multIndex].HstrData[hstrIndex][i] = msgIn.MultiDataPayload.m_data[i];
-        printf("measure saved: %d. ", msgIn.MultiDataPayload.m_data[i]);
-      }
       MySensorsArr[senIndex].Status = SEN_STATUS_GOT_DATA;
       MySensorsArr[senIndex].IsNew = 0;
       // if its installation mode but the sensor was known already or if sensor is out of its slot
       if  (((GetCurrentMode() == MODE_INSTALLATION) && (bNewSensor == false) && (msgIn.Header.m_addressee == DEFAULT_ID))
           || ((MySensorsArr[senIndex].slot.index != g_nCurTimeSlot) && (g_nDeltaOfSlots == 0) && (bNewSensor == false)))
-        nSlot = SwapSlot(senIndex);*/
+        nSlot = SwapSlot(senIndex);
       break;
     } // switch
 

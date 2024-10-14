@@ -43,7 +43,7 @@ void SetNewRfPower(rf_power newPwr);
 // Add the function declaration for send_adc_results
 RAIL_Status_t rf_send_adc_results(RAIL_Handle_t rail_handle, IADC_Result_t *adcResults, size_t length);
 
-extern volatile bool tx_requested;
+//extern volatile bool tx_requested;
 extern volatile bool rx_requested;
 extern uint8_t out_packet[21];
 

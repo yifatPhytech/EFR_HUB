@@ -61,16 +61,16 @@ typedef enum
 } state_t;
 
 /// tx_requested and rx_requested boolean variables
-volatile bool tx_requested = false;
+//volatile bool tx_requested = false;
 volatile bool rx_requested = true;
 volatile rf_power g_curRfPwr;
 volatile rf_power g_newRfPwr;
 /// Transmit packet
 //uint8_t out_packet[TX_PAYLOAD_LENGTH];
-uint8_t out_packet[21] =
-    {
-        20, 56, 162, 135, 0, 12, 123, 2, 2, 2, 2, 2, 2, 1, 168, 178, 255, 255, 255, 255, 75
-    };
+//uint8_t out_packet[21] =
+//    {
+//        20, 56, 162, 135, 0, 12, 123, 2, 2, 2, 2, 2, 2, 1, 168, 178, 255, 255, 255, 255, 75
+//    };
 
 // -----------------------------------------------------------------------------
 //                                Static Variables
@@ -272,18 +272,18 @@ void app_process_action(RAIL_Handle_t rail_handle)
       break;
     case S_IDLE:
       {
-        if (tx_requested)
-          {
-            prepare_package(rail_handle, out_packet, sizeof(out_packet));
-            rail_status = RAIL_StartTx(rail_handle, get_selected_channel(), RAIL_TX_OPTIONS_DEFAULT, NULL);
-            if (rail_status != RAIL_STATUS_NO_ERROR)
-              {
-#if defined(SL_CATALOG_APP_LOG_PRESENT)
-                app_log_warning("RAIL_StartTx() result:%d ", rail_status);
-#endif
-              }
-            tx_requested = false;
-          }
+//        if (tx_requested)
+//          {
+//            prepare_package(rail_handle, out_packet, sizeof(out_packet));
+//            rail_status = RAIL_StartTx(rail_handle, get_selected_channel(), RAIL_TX_OPTIONS_DEFAULT, NULL);
+//            if (rail_status != RAIL_STATUS_NO_ERROR)
+//              {
+//#if defined(SL_CATALOG_APP_LOG_PRESENT)
+//                app_log_warning("RAIL_StartTx() result:%d ", rail_status);
+//#endif
+//              }
+//            tx_requested = false;
+//          }
       }
       break;
 
@@ -440,12 +440,12 @@ RAIL_Status_t rf_send(RAIL_Handle_t rail_handle, uint8_t *packet, size_t packet_
     }
 
   // Reset the tx_requested flag as the transmission is initiated.
-  tx_requested = false;
+//  tx_requested = false;
 
   return status;
 }
 
-RAIL_Status_t rf_send_NG(RAIL_Handle_t rail_handle, uint8_t *packet, size_t packet_len)
+/*RAIL_Status_t rf_send_NG(RAIL_Handle_t rail_handle, uint8_t *packet, size_t packet_len)
 {
   // Debug print to log the original packet_len
   printf("\r\nOriginal packet length: %zu\n", packet_len);
@@ -497,8 +497,8 @@ RAIL_Status_t rf_send_NG(RAIL_Handle_t rail_handle, uint8_t *packet, size_t pack
   tx_requested = false;
 
   return status;
-}
-
+}*/
+/*
 RAIL_Status_t rf_send_LEGACY(RAIL_Handle_t rail_handle, uint8_t *packet, size_t packet_len)
 {
   // Debug print to log the original packet_len
@@ -535,7 +535,7 @@ RAIL_Status_t rf_send_LEGACY(RAIL_Handle_t rail_handle, uint8_t *packet, size_t 
   tx_requested = false;
 
   return status;
-}
+}*/
 
 RAIL_Status_t rf_send_adc_results(RAIL_Handle_t rail_handle, IADC_Result_t *adcResults, size_t length)
 {

@@ -15,6 +15,7 @@
 #include "libraries/Hub_Definition/hub_protocols.h"
 #include "libraries/phytech_protocol/phytech_protocol.h"
 #include "libraries/tools/tools.h"
+#include "libraries/Sensors_List/MultiDataSnsHandle.h"
 
 
 Sen_Hub_Rec_Msg msgOut;
@@ -30,13 +31,13 @@ uint8_t GetNumSensors()
   return n;
 }
 
-bool IsMultySensor(uint32_t id)
-{
+//bool IsMultySensor(uint32_t id)
+//{
 //  for (uint8_t j = 0; j < 5; j++)
 //    if (MultySensorArr[j].ID == id)
 //      return true;
-  return false;
-}
+//  return false;
+//}
 
 bool IsHistory(uint8_t ind)
 {
